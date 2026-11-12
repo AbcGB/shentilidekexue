@@ -9,7 +9,7 @@
   "homeSubtitle": "从人体结构出发，认识皮肤下面的穿支血管；了解丁志伟老师研发的皮门多普勒穴位定位演示设备与培训。",
   "owner": "陈宇明（陈老师）",
   "_siteUrl说明": "正式域名确定后，把下面的 siteUrl 改成自己的域名（例如 https://www.你的域名.com），不要以 / 结尾。也可以在部署平台设置环境变量 SITE_URL 覆盖它。在填入真实域名之前，网站内的规范网址（canonical）和站点地图会使用这个占位地址。",
-  "siteUrl": "https://www.example.com",
+  "siteUrl": "https://pimen.cc",
   "searchPlaceholder": "搜索穴位名称，例如：足三里、阳陵泉、三阴交、外关穴……",
   "hotAcupoints": [
     "zusanli",
