@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import UpdateList from '../components/UpdateList.astro';
+import { getLearning } from '../lib/data';
+import { u } from '../lib/url';
+const entries = getLearning().filter((e) => e.type === '学习资料');
+---
+<Base title="学习资料：取穴基础与参考资料" path="/ziliao/" description="身体里的科学·学习资料：骨度分寸与同身寸等取穴基础知识，以及穴位定位所依据的国家标准与针灸教材。">
+  <div class="container prose">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 学习资料</div>
+    <h1>学习资料</h1>
+    <p class="notice">本页内容待专业老师审核。</p>
+    <h2>取穴基础：“寸”是什么？</h2>
+    <p>穴位定位中常见“犊鼻下3寸”“内踝尖上3寸”等描述。这里的“寸”不是固定长度，而是按被定位者本人身体比例换算的相对长度，教材中常用以下方法：</p>
+    <ul>
+      <li><strong>骨度分寸法</strong>：以骨节等体表标志为依据，将身体某一段的长度折成规定的等份。例如教材规定膝中（腘横纹）至外踝尖为16寸。</li>
+      <li><strong>手指同身寸</strong>：用被定位者本人手指的宽度作为尺度。常用的有：拇指同身寸（拇指指间关节宽度为1寸）、中指同身寸（中指中节两端横纹之间为1寸）、横指同身寸（又称“一夫法”，食指、中指、无名指、小指并拢，以中指中节横纹处为准，四指宽度为3寸）。</li>
+      <li><strong>体表解剖标志</strong>：利用骨性突起、肌腱、皮肤皱纹等标志定位，例如阳陵泉在腓骨头前下方凹陷中。</li>
+    </ul>
+    <h2>参考资料</h2>
+    <ul>
+      <li>中华人民共和国国家标准 GB/T 12346-2021《经穴名称与定位》</li>
+      <li>世界卫生组织西太平洋区《WHO Standard Acupuncture Point Locations in the Western Pacific Region》（2008）</li>
+      <li>全国中医药行业高等教育规划教材《经络腧穴学》《针灸学》（中国中医药出版社，具体版次待审核老师补充）</li>
+    </ul>
+    <h2>近期学习资料</h2>
+    {entries.length > 0 ? <UpdateList entries={entries} showDate /> : <p class="placeholder">整理中。</p>}
+    <p class="small muted">更多资料（老师讲义、设备资料等）待负责人提供后补充。</p>
+  </div>
+</Base>

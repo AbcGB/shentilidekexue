@@ -1,0 +1,107 @@
+---
+import '../styles/global.css';
+import { site, siteUrl } from '../lib/data';
+import { u } from '../lib/url';
+
+interface Props {
+  title: string;            // 页面标题（不含品牌名）
+  description?: string;
+  path: string;             // 本页路径，例如 /xuewei/zusanli/
+  noindex?: boolean;        // 老师工作台等内部页面设为 true
+  ogImage?: string;
+  ogType?: string;
+  updated?: string;         // 内容更新日期
+  keywords?: string[];
+  jsonLd?: any;
+  fullTitle?: boolean;      // 为 true 时 title 不再追加品牌名
+}
+const { title, description = site.seo.defaultDescription, path, noindex = false, ogImage = site.seo.defaultOgImage, ogType = 'website', updated, keywords, jsonLd, fullTitle = false } = Astro.props;
+const base = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
+const pageTitle = fullTitle ? title : `${title}｜${site.siteName}`;
+const canonical = siteUrl() + base.replace(/\/$/, '') + path;
+const ogImageUrl = /^https?:/.test(ogImage) ? ogImage : siteUrl() + base.replace(/\/$/, '') + ogImage;
+const current = Astro.url.pathname;
+const nav = [
+  { href: '/', label: '首页' },
+  { href: '/xuewei/', label: '穴位知识库' },
+  { href: '/learning/today/', label: '今日学习' },
+  { href: '/equipment/', label: '设备演示' },
+  { href: '/teacher/', label: '老师工作台' },
+  { href: '/feedback/', label: '意见反馈' },
+];
+const isCurrent = (href: string) => {
+  const full = u(href);
+  if (href === '/') return current === full;
+  if (href === '/learning/today/') return current.startsWith(u('/learning/'));
+  return current.startsWith(full);
+};
+---
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{pageTitle}</title>
+  <meta name="description" content={description} />
+  {keywords && keywords.length > 0 && <meta name="keywords" content={keywords.join(',')} />}
+  <link rel="canonical" href={canonical} />
+  {noindex ? <meta name="robots" content="noindex, nofollow" /> : <meta name="robots" content="index, follow" />}
+  <link rel="icon" href={u('/favicon.svg')} type="image/svg+xml" />
+  <meta name="theme-color" content="#12305a" />
+  <meta property="og:site_name" content={site.siteName} />
+  <meta property="og:type" content={ogType} />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:image" content={ogImageUrl} />
+  <meta property="og:image:alt" content={`${site.siteName}：${site.slogan}`} />
+  <meta property="og:locale" content="zh_CN" />
+  <meta name="twitter:card" content="summary_large_image" />
+  {updated && <meta property="article:modified_time" content={updated} />}
+  {site.seo.googleSiteVerification && <meta name="google-site-verification" content={site.seo.googleSiteVerification} />}
+  {site.seo.baiduSiteVerification && <meta name="baidu-site-verification" content={site.seo.baiduSiteVerification} />}
+  <link rel="sitemap" href={u('/sitemap.xml')} />
+  {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href={u('/')} aria-label={`${site.siteName} 首页`}>
+        <img src={u('/images/brand/logo.svg')} alt={`${site.siteName} 标志`} width="34" height="34" />
+        <span><span class="brand-name">{site.siteName}</span><span class="brand-slogan">{site.slogan}</span></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">☰ 菜单</button>
+      <nav class="nav" id="site-nav" aria-label="主导航">
+        {nav.map((n) => <a href={u(n.href)} aria-current={isCurrent(n.href) ? 'page' : undefined}>{n.label}</a>)}
+      </nav>
+    </div>
+  </header>
+  <main>
+    <slot />
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div><strong style="color:#fff">{site.siteName}</strong> · {site.slogan}</div>
+      <div class="footer-links">
+        <a href={u('/xuewei/')}>穴位知识库</a>
+        <a href={u('/learning/today/')}>今日学习</a>
+        <a href={u('/learning/archive/')}>历史更新</a>
+        <a href={u('/equipment/')}>皮门多普勒定位演示</a>
+        <a href={u('/ziliao/')}>学习资料</a>
+        <a href={u('/about/')}>关于我们</a>
+        <a href={u('/feedback/')}>意见反馈</a>
+      </div>
+      <div>本站内容为传统经络知识科普与设备操作演示记录，不构成诊断或治疗建议；身体不适请到正规医疗机构就诊。标注“待审核”的内容尚未经专业老师确认。</div>
+      {site.icp.number && <div><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">{site.icp.number}</a></div>}
+    </div>
+  </footer>
+  <script>
+    const btn = document.querySelector('.nav-toggle');
+    const nav = document.getElementById('site-nav');
+    btn?.addEventListener('click', () => {
+      const open = nav!.classList.toggle('open');
+      btn.setAttribute('aria-expanded', String(open));
+    });
+  </script>
+</body>
+</html>

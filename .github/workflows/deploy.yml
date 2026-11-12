@@ -1,0 +1,103 @@
+# 自动构建（和可选的自动部署）
+# 每次把修改提交到 GitHub 的 main 分支，都会自动：检查内容 → 生成网站（dist 文件夹）→ 打包保存 30 天。
+# 默认【只构建、不部署】。如需自动部署，在 GitHub 仓库 Settings → Secrets and variables → Actions → Variables
+# 新建变量 DEPLOY_TARGET，值填以下之一（详见 README 第 7 部分）：
+#   server             —— 上传到自己的服务器（中国大陆云服务器 / 香港服务器均可）
+#   cloudflare         —— 部署到 Cloudflare Pages（需实测中国大陆访问情况）
+#   github-pages-test  —— 仅用于测试预览的 GitHub Pages（不要作为正式经营网站）
+name: 构建网站
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: 检查内容并生成网站
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: 生成网站
+        run: npm run build
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          BASE_PATH: ${{ vars.BASE_PATH }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: website-dist
+          path: dist
+          retention-days: 30
+
+  deploy-server:
+    name: 部署到自己的服务器
+    needs: build
+    if: github.event_name != 'pull_request' && vars.DEPLOY_TARGET == 'server'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: website-dist
+          path: dist
+      - name: 上传文件（rsync over SSH）
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ vars.SSH_PORT || '22' }}
+          SERVER_PATH: ${{ vars.SERVER_PATH }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -p $SSH_PORT" dist/ "$SSH_USER@$SSH_HOST:$SERVER_PATH/"
+
+  deploy-cloudflare:
+    name: 部署到 Cloudflare Pages
+    needs: build
+    if: github.event_name != 'pull_request' && vars.DEPLOY_TARGET == 'cloudflare'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: website-dist
+          path: dist
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npx --yes wrangler pages deploy dist --project-name="${{ vars.CLOUDFLARE_PROJECT_NAME }}" --branch=main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-github-pages-test:
+    name: 部署到 GitHub Pages（仅测试预览）
+    needs: build
+    if: github.event_name != 'pull_request' && vars.DEPLOY_TARGET == 'github-pages-test'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: website-dist
+          path: dist
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

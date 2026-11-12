@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import { site } from '../lib/data';
+import { u } from '../lib/url';
+---
+<Base title="关于我们：身体里的科学" path="/about/" description="关于身体里的科学：人体穴位知识库、皮门多普勒定位演示与新媒体内容中心。了解我们的内容原则、审核方式与隐私说明。">
+  <div class="container prose">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 关于我们</div>
+    <h1>关于我们</h1>
+    <p><strong>{site.siteName}</strong> —— {site.slogan}</p>
+    <p>“身体里的科学”是一个围绕人体穴位知识科普、传统经络知识分享和多普勒设备定位演示的新媒体项目。网站希望逐步积累一个真实、可查、持续更新的人体穴位知识库，并为团队的医生和老师提供方便的日常内容工作台。</p>
+    <h2>我们做什么</h2>
+    <ul>
+      <li><strong>人体穴位知识库</strong>：整理常用穴位的标准位置、所属经络、简便找法和传统经络理论中的相关记载，并注明参考资料。</li>
+      <li><strong>皮门多普勒定位演示</strong>：记录丁老师研发的多普勒设备在穴位定位演示中的真实操作过程。</li>
+      <li><strong>专业学习交流</strong>：整理团队老师的学习资料与学习记录。</li>
+      <li><strong>新媒体内容中心</strong>：为视频号、抖音、小红书、公众号等账号准备发布内容。</li>
+    </ul>
+    <h2>内容原则</h2>
+    <ul>
+      <li>穴位定位以国家标准 GB/T 12346-2021《经穴名称与定位》和针灸教材为依据，不凭空编造。</li>
+      <li>传统经络理论中的应用，不等同于现代医学已证实的疗效，网站不提供诊断或治疗建议。</li>
+      <li>设备演示只记录真实操作过程，不宣称百分之百精准定位，不宣称治疗效果。</li>
+      <li>只填写真实参与创作和审核的人员信息；尚未经专业老师审核的内容，一律标注“待审核”。</li>
+      <li>图片和视频只使用真实拍摄并获得授权的素材，不展示患者隐私。</li>
+    </ul>
+    <h2>负责人</h2>
+    <p>项目负责人：{site.owner}</p>
+    <p class="small muted">团队老师介绍待负责人提供真实资料后补充。</p>
+    <h2 id="privacy">隐私说明</h2>
+    <ul>
+      <li>本站目前没有接入任何访问统计、广告或第三方追踪代码，也不设置用户登录。</li>
+      <li>本站不收集访问者的个人信息。意见反馈如跳转到第三方表单，相关数据由该表单服务商按其隐私政策处理。</li>
+      <li>以后如接入访问统计，会在此处更新说明。</li>
+    </ul>
+    {site.contact.email && <p>联系邮箱：{site.contact.email}</p>}
+    {site.contact.wechatOfficialAccount && <p>微信公众号：{site.contact.wechatOfficialAccount}</p>}
+    <p><a href={u('/feedback/')}>意见反馈 →</a></p>
+  </div>
+</Base>

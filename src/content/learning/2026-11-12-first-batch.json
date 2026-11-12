@@ -1,0 +1,28 @@
+{
+  "id": "2026-11-12-first-batch",
+  "date": "2026-11-12",
+  "time": "09:00",
+  "title": "首批六个穴位资料导入：足三里、阳陵泉、三阴交、外关、后溪、神门",
+  "type": "穴位知识",
+  "acupoints": [
+    "zusanli",
+    "yanglingquan",
+    "sanyinjiao",
+    "waiguan",
+    "houxi",
+    "shenmen"
+  ],
+  "teachers": [
+    "待填写"
+  ],
+  "content": "导入首批六个穴位的标准定位、经络归属、简便找法、传统经络理论记载及参考资料。所有内容均为待审核状态，请专业老师核对后反馈。",
+  "videoLinks": [],
+  "images": [],
+  "reviewStatus": "待专业审核",
+  "publishStatus": "已发布",
+  "keywords": [
+    "穴位知识库",
+    "首批穴位"
+  ],
+  "link": "/xuewei/"
+}

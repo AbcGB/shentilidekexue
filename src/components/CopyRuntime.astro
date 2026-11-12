@@ -1,0 +1,71 @@
+---
+// 复制功能：先用浏览器剪贴板接口，失败时用兼容方式，再失败则弹出手动复制框。
+// 复制的文字来自页面中 id="copy-data" 的数据（与页面显示的文字同源）。
+---
+<div class="toast" role="status" aria-live="polite">复制成功！</div>
+<div class="manual-dialog" role="dialog" aria-modal="true" aria-labelledby="manual-title">
+  <div class="panel">
+    <h3 id="manual-title" style="margin-top:0">请手动复制</h3>
+    <p class="small muted">当前浏览器不允许自动复制。文字已全部选中：电脑请按 Ctrl+C（苹果电脑按 ⌘+C）；手机请长按文字，选择“全选”后再点“复制”。</p>
+    <textarea readonly></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button type="button" class="btn btn-outline" data-manual-select>重新全选</button>
+      <button type="button" class="btn" data-manual-close>关闭</button>
+    </div>
+  </div>
+</div>
+<script>
+  const dataEl = document.getElementById('copy-data');
+  const map: Record<string, string> = dataEl ? JSON.parse(dataEl.textContent || '{}') : {};
+  const toast = document.querySelector<HTMLElement>('.toast')!;
+  const dialog = document.querySelector<HTMLElement>('.manual-dialog')!;
+  const ta = dialog.querySelector('textarea')!;
+  let timer: any;
+
+  function showToast(msg = '复制成功！') {
+    toast.textContent = msg; toast.classList.add('show');
+    clearTimeout(timer); timer = setTimeout(() => toast.classList.remove('show'), 1600);
+  }
+  function legacyCopy(text: string): boolean {
+    const t = document.createElement('textarea');
+    t.value = text; t.setAttribute('readonly', '');
+    t.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+    document.body.appendChild(t);
+    t.focus(); t.select(); t.setSelectionRange(0, text.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    document.body.removeChild(t);
+    return ok;
+  }
+  async function copyText(text: string): Promise<boolean> {
+    if ((window as any).__forceManualCopy) return false; // 测试用
+    try {
+      if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; }
+    } catch { /* 改用兼容方式 */ }
+    return legacyCopy(text);
+  }
+  function openManual(text: string) {
+    ta.value = text; dialog.classList.add('open');
+    setTimeout(() => { ta.focus(); ta.select(); ta.setSelectionRange(0, text.length); }, 30);
+  }
+  dialog.querySelector('[data-manual-close]')!.addEventListener('click', () => dialog.classList.remove('open'));
+  dialog.querySelector('[data-manual-select]')!.addEventListener('click', () => { ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length); });
+  dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.classList.remove('open'); });
+
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-copy-key]');
+    if (!btn) return;
+    const key = btn.dataset.copyKey!;
+    const text = map[key];
+    if (text === undefined) { showToast('没有找到要复制的内容'); return; }
+    const ok = await copyText(text);
+    (window as any).__lastCopied = { key, text, ok };
+    if (ok) {
+      showToast('复制成功！');
+      const old = btn.textContent; btn.textContent = '✓ 已复制'; btn.setAttribute('data-copied', '1');
+      setTimeout(() => { btn.textContent = old; btn.removeAttribute('data-copied'); }, 1500);
+    } else {
+      openManual(text);
+    }
+  });
+</script>

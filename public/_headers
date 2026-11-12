@@ -1,0 +1,4 @@
+# 适用于 Cloudflare Pages / Netlify 等支持 _headers 文件的静态托管：
+# 给老师工作台额外加上“不收录”的响应头。其他托管方式可忽略此文件。
+/teacher/*
+  X-Robots-Tag: noindex, nofollow

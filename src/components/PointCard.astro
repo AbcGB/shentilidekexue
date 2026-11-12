@@ -1,0 +1,11 @@
+---
+import ReviewBadge from './ReviewBadge.astro';
+import { u } from '../lib/url';
+const { p } = Astro.props;
+---
+<a class="card point-card" href={u(`/xuewei/${p.slug}/`)}>
+  <h3>{p.displayName}</h3>
+  <div class="meta">{p.meridian} · {p.code}</div>
+  <p>{p.summary}</p>
+  <div style="margin-top:8px"><ReviewBadge status={p.reviewStatus} /></div>
+</a>

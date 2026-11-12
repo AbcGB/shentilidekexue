@@ -1,0 +1,26 @@
+{
+  "id": "2026-11-13-neiguan-video",
+  "date": "2026-11-13",
+  "time": "12:00",
+  "title": "今日视频①：内关穴在哪里？",
+  "type": "穴位视频",
+  "acupoints": [
+    "neiguan"
+  ],
+  "teachers": [
+    "（拍摄老师）"
+  ],
+  "content": "（这条内容的简介）",
+  "videoLinks": [
+    {
+      "title": "视频号链接",
+      "url": "https://..."
+    }
+  ],
+  "images": [],
+  "reviewStatus": "待审核",
+  "publishStatus": "待发布",
+  "keywords": [
+    "内关"
+  ]
+}

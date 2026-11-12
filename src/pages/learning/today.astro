@@ -1,0 +1,26 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryCard from '../../components/EntryCard.astro';
+import { getLearning, latestDate } from '../../lib/data';
+import { u } from '../../lib/url';
+const latest = latestDate();
+const entries = getLearning().filter((e) => e.date === latest);
+---
+<Base title="今日学习：当天新增穴位视频与学习内容" path="/learning/today/" description="身体里的科学·今日学习：当天新增的穴位视频、学习资料与设备演示记录。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 今日学习</div>
+    <h1>今日学习</h1>
+    <p class="muted" data-today-head data-latest={latest}>最近更新：{latest}，共 {entries.length} 条。</p>
+    {entries.map((e) => <EntryCard e={e} />)}
+    <p><a class="btn btn-outline" href={u('/learning/archive/')}>查看历史更新 →</a></p>
+  </div>
+  <script>
+    const el = document.querySelector<HTMLElement>('[data-today-head]');
+    if (el) {
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+      const latest = el.dataset.latest;
+      if (latest !== today) el.innerHTML = `今天（${today}）暂无新内容，以下是最近一次更新（${latest}）。`;
+      else el.textContent = `今天（${today}）新增 ${document.querySelectorAll('.entry').length} 条内容。`;
+    }
+  </script>
+</Base>

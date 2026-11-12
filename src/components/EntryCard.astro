@@ -1,0 +1,34 @@
+---
+import ReviewBadge from './ReviewBadge.astro';
+import { u } from '../lib/url';
+import { getAcupoints } from '../lib/data';
+const { e } = Astro.props;
+const all = getAcupoints();
+const pts = (e.acupoints || []).map((s: string) => all.find((p: any) => p.slug === s)).filter(Boolean);
+const meridians = Array.from(new Set(pts.map((p: any) => p.meridian)));
+---
+<article class="entry" id={e.id}
+  data-date={e.date} data-type={e.type} data-points={pts.map((p: any) => p.name).join('|')}
+  data-meridians={meridians.join('|')} data-teachers={(e.teachers || []).join('|')}
+  data-text={`${e.title} ${e.content} ${(e.keywords || []).join(' ')} ${pts.map((p: any) => p.name + ' ' + p.pinyin.replace(/\s/g, '')).join(' ')}`.toLowerCase()}>
+  <div class="update-meta">
+    <span class="badge">{e.type}</span>
+    <span class="small muted">{e.date} {e.time}</span>
+    <span class="badge badge-gray">{e.publishStatus}</span>
+    <ReviewBadge status={e.reviewStatus} />
+  </div>
+  <h3>{e.title}</h3>
+  <p style="margin:4px 0">{e.content}</p>
+  <dl class="info small">
+    {pts.length > 0 && <><dt>穴位</dt><dd>{pts.map((p: any, i: number) => <>{i > 0 && '、'}<a href={u(`/xuewei/${p.slug}/`)}>{p.displayName}</a></>)}</dd></>}
+    {meridians.length > 0 && <><dt>经络</dt><dd>{meridians.join('、')}</dd></>}
+    <dt>老师</dt><dd>{(e.teachers || []).join('、') || '待填写'}</dd>
+    <dt>视频</dt><dd>{e.videoLinks?.length ? e.videoLinks.map((v: any) => <a href={v.url} target="_blank" rel="noopener">{v.title} </a>) : '待提供'}</dd>
+  </dl>
+  {e.images?.length > 0 && <div class="grid grid-3" style="margin-top:8px">{e.images.map((im: any) => <img src={u(im.src)} alt={im.alt} loading="lazy" />)}</div>}
+  <div class="actions">
+    {e.link && <a class="btn btn-outline" href={u(e.link)}>查看详情</a>}
+    {pts.length === 1 && !e.link && <a class="btn btn-outline" href={u(`/xuewei/${pts[0].slug}/`)}>穴位详情</a>}
+    {pts.length === 1 && <a class="btn" href={u(`/teacher/${pts[0].slug}/`)}>对应发布文案</a>}
+  </div>
+</article>

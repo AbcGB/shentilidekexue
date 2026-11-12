@@ -1,0 +1,140 @@
+{
+  "_使用说明": "复制本文件到 src/content/acupoints/，文件名改成穴位拼音（如 neiguan.json），然后逐项修改。所有带 _ 开头的说明字段可以删除。publishStatus 先写 draft（草稿），六个账号文案都写完后再改为 published（发布）。",
+  "id": "neiguan",
+  "slug": "neiguan",
+  "code": "PC6",
+  "name": "内关",
+  "displayName": "内关穴",
+  "pinyin": "nei guan",
+  "aliases": [
+    "内关穴",
+    "PC6",
+    "Neiguan"
+  ],
+  "meridian": "手厥阴心包经",
+  "bodyRegion": "前臂前区",
+  "specialPointCategories": [
+    "（填写特定穴属性，如：络穴）"
+  ],
+  "summary": "（一句话简介，显示在搜索结果和列表里）",
+  "seo": {
+    "title": "内关在哪里？内关穴位置与传统经络知识",
+    "description": "（120 字以内的页面描述）",
+    "keywords": [
+      "内关",
+      "内关在哪里",
+      "内关位置",
+      "身体里的科学"
+    ]
+  },
+  "standardLocation": {
+    "standard": "（照抄国家标准 GB/T 12346-2021 中的定位描述）",
+    "standardSource": "GB/T 12346-2021《经穴名称与定位》",
+    "plain": "（通俗说法）",
+    "findingTips": [
+      "第一步……",
+      "第二步……",
+      "第三步……"
+    ]
+  },
+  "traditionalApplications": {
+    "intro": "在传统针灸教材中，内关穴的主治范围常记载为：",
+    "items": [
+      "（教材记载 1）",
+      "（教材记载 2）"
+    ],
+    "note": "以上为传统经络理论及针灸教材中的记载，不等同于现代医学已证实的疗效，不作为自我诊断或治疗的依据。如有不适请到正规医疗机构就诊。"
+  },
+  "nameOrigin": "（名称由来，注明是传统解释）",
+  "cautions": [
+    "针刺等操作须由具备资质的专业人员进行。"
+  ],
+  "relatedAcupoints": [
+    {
+      "name": "外关",
+      "note": "与内关内外相对"
+    }
+  ],
+  "relatedSlugs": [
+    "waiguan"
+  ],
+  "videoText": "（视频口播稿）",
+  "publicArticle": "neiguan",
+  "dopplerDemo": {
+    "status": "待提供",
+    "note": "真实设备照片与定位演示视频待负责人提供。网站不使用 AI 生成或来源不明的设备图片。",
+    "photos": [],
+    "videos": []
+  },
+  "videos": [],
+  "images": [],
+  "sources": [
+    {
+      "title": "中华人民共和国国家标准 GB/T 12346-2021《经穴名称与定位》",
+      "note": "标准定位描述的主要依据；具体条文待审核老师对照原文核对。"
+    },
+    {
+      "title": "世界卫生组织西太平洋区《WHO Standard Acupuncture Point Locations in the Western Pacific Region》（2008）",
+      "note": "国际通用穴位代码与定位参考。"
+    },
+    {
+      "title": "全国中医药行业高等教育规划教材《经络腧穴学》《针灸学》（中国中医药出版社）",
+      "note": "经络归属、特定穴属性及传统主治的参考；具体版次与页码待审核老师补充。"
+    }
+  ],
+  "author": "（真实作者姓名）",
+  "reviewer": "待审核",
+  "reviewDate": "",
+  "reviewStatus": "待审核",
+  "publishStatus": "draft",
+  "publishDate": "2026-11-13",
+  "updateDate": "2026-11-13",
+  "copyStatus": "待人工确认后发布",
+  "accountCopies": [
+    {
+      "accountId": "wx-video",
+      "title": "",
+      "description": "",
+      "keywords": [],
+      "hashtags": []
+    },
+    {
+      "accountId": "douyin",
+      "title": "",
+      "description": "",
+      "keywords": [],
+      "hashtags": []
+    },
+    {
+      "accountId": "xiaohongshu",
+      "title": "",
+      "description": "",
+      "keywords": [],
+      "hashtags": []
+    },
+    {
+      "accountId": "wechat-mp",
+      "title": "",
+      "description": "",
+      "keywords": [],
+      "hashtags": []
+    },
+    {
+      "accountId": "ding-device",
+      "title": "",
+      "description": "",
+      "keywords": [],
+      "hashtags": []
+    },
+    {
+      "accountId": "other-teacher",
+      "title": "",
+      "description": "",
+      "keywords": [],
+      "hashtags": []
+    }
+  ],
+  "wechatArticle": {
+    "status": "待制作"
+  }
+}

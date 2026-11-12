@@ -1,0 +1,36 @@
+{
+  "_说明": "网站基本设置。修改后保存并重新构建即可生效。带 _ 开头的字段只是说明文字，不会显示在网站上。",
+  "siteName": "身体里的科学",
+  "slogan": "探索人体奥秘，发现生命科学。",
+  "homeTitle": "人体穴位知识库",
+  "homeSubtitle": "穴位知识 · 多普勒定位演示 · 专业学习交流 · 新媒体内容中心",
+  "owner": "陈宇明（陈老师）",
+  "_siteUrl说明": "正式域名确定后，把下面的 siteUrl 改成自己的域名（例如 https://www.你的域名.com），不要以 / 结尾。也可以在部署平台设置环境变量 SITE_URL 覆盖它。在填入真实域名之前，网站内的规范网址（canonical）和站点地图会使用这个占位地址。",
+  "siteUrl": "https://www.example.com",
+  "searchPlaceholder": "搜索穴位名称，例如：足三里、阳陵泉、三阴交、外关穴……",
+  "hotAcupoints": ["zusanli", "sanyinjiao", "shenmen", "yanglingquan"],
+  "feedback": {
+    "_说明": "反馈入口设置。formUrl 填外部表单地址（如腾讯问卷、金数据、飞书表单等）；groupUrl 填工作群二维码页面或群链接（可选）。留空时，网站会显示“尚未设置”的提示，并提供一段可复制的反馈模板，老师可以直接发到工作群。",
+    "formUrl": "",
+    "formButtonText": "提交意见或建议",
+    "groupUrl": "",
+    "groupButtonText": "前往工作群",
+    "groupNote": "也可以直接在「身体里的科学」工作群里 @陈老师 反馈。"
+  },
+  "seo": {
+    "_说明": "搜索引擎验证码。在 Google Search Console 或百度搜索资源平台选择“HTML 标签验证”后，把 content=\"...\" 引号里的那串字符填到这里即可。留空则不输出。",
+    "googleSiteVerification": "",
+    "baiduSiteVerification": "",
+    "defaultDescription": "身体里的科学：人体穴位知识库，整理常用穴位的标准位置、所属经络与传统经络知识，并记录皮门多普勒定位演示过程。内容持续更新，未经专业审核的内容均标注“待审核”。",
+    "defaultOgImage": "/images/brand/og-default.png"
+  },
+  "contact": {
+    "_说明": "对外联系方式（可选）。没有就留空，页面不会显示。",
+    "email": "",
+    "wechatOfficialAccount": ""
+  },
+  "icp": {
+    "_说明": "如果以后使用中国大陆服务器并完成 ICP 备案，把备案号填在 number（例如：京ICP备XXXXXXXX号），页面底部会自动显示并链接到工信部网站。",
+    "number": ""
+  }
+}

@@ -1,0 +1,90 @@
+---
+import { buildSearchIndex } from '../lib/search-index';
+import { site } from '../lib/data';
+import { u } from '../lib/url';
+interface Props { mode?: 'live' | 'page'; autofocus?: boolean }
+const { mode = 'live', autofocus = false } = Astro.props;
+const index = buildSearchIndex();
+---
+<div class="search-box" data-search data-mode={mode}>
+  <form class="search-form" action={u('/search/')} method="get" role="search">
+    <label class="sr-only" for={`q-${mode}`}>搜索穴位</label>
+    <input id={`q-${mode}`} name="q" type="search" autocomplete="off" enterkeyhint="search" placeholder={site.searchPlaceholder} autofocus={autofocus} />
+    <button class="btn btn-lg" type="submit">搜索</button>
+  </form>
+  <ul class="search-results" aria-live="polite"></ul>
+  <div class="search-empty" hidden>没有找到相关内容。可以试试：穴位名称（如“足三里”）、部分文字（如“三里”）、拼音（如“zusanli”或“zsl”）、经络名称（如“胃经”）。</div>
+  <script type="application/json" class="search-data" set:html={JSON.stringify(index).replace(/</g, "\\u003c")} />
+</div>
+
+<script>
+  type Item = { k: string; title: string; meta: string; desc: string; url: string; name: string; aliases: string[]; py: string; pyi: string; meridian: string; kw: string; body: string };
+  const norm = (s: string) => (s || '').toLowerCase().replace(/[\s·,，。、；;:：!！?？"“”'‘’()（）【】\[\]\-_/]+/g, '');
+
+  function score(it: Item, q: string): number {
+    if (!q) return 0;
+    const variants = Array.from(new Set([q, q.replace(/穴/g, ''), q.replace(/(在哪里|在哪儿|在哪|位置|怎么找|定位|穴位)$/g, '').replace(/穴$/, '')])).filter(Boolean);
+    let best = 0;
+    for (const v of variants) {
+      let s = 0;
+      const name = norm(it.name);
+      const title = norm(it.title);
+      if (name && name === v) s = Math.max(s, 120);
+      if (name && name.startsWith(v)) s = Math.max(s, 95);
+      if (name && name.includes(v)) s = Math.max(s, 85);
+      if (name && name.length >= 2 && v.includes(name)) s = Math.max(s, 80);
+      if (title.includes(v)) s = Math.max(s, it.k === 'point' ? 80 : 45);
+      for (const a of it.aliases || []) {
+        const na = norm(a);
+        if (na === v) s = Math.max(s, it.k === 'point' ? 100 : 50);
+        else if (na.includes(v)) s = Math.max(s, it.k === 'point' ? 70 : 40);
+        else if (na.length >= 2 && v.includes(na)) s = Math.max(s, it.k === 'point' ? 65 : 35);
+      }
+      if (/^[a-z]+$/.test(v)) {
+        const pys = norm(it.py);
+        if (it.py === v || pys === v) s = Math.max(s, 110);
+        else if (pys.startsWith(v) && v.length >= 2) s = Math.max(s, 85);
+        else if (pys.includes(v) && v.length >= 3) s = Math.max(s, 50);
+        if (it.pyi && it.pyi === v) s = Math.max(s, 90);
+        else if (it.pyi && it.pyi.startsWith(v) && v.length >= 2) s = Math.max(s, 55);
+      }
+      if (norm(it.meridian).includes(v)) s = Math.max(s, 40);
+      if (norm(it.kw).includes(v)) s = Math.max(s, 30);
+      if (v.length >= 2 && norm(it.body).includes(v)) s = Math.max(s, 15);
+      if (it.k === 'entry') s = s * 0.9;
+      best = Math.max(best, s);
+    }
+    return best;
+  }
+
+  function esc(s: string) { return (s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!)); }
+  const label: Record<string, string> = { point: '穴位', entry: '历史内容', page: '栏目' };
+
+  document.querySelectorAll<HTMLElement>('[data-search]').forEach((box) => {
+    const data: Item[] = JSON.parse(box.querySelector('.search-data')!.textContent || '[]');
+    const input = box.querySelector('input')!;
+    const list = box.querySelector('.search-results')!;
+    const empty = box.querySelector<HTMLElement>('.search-empty')!;
+    const mode = box.dataset.mode;
+    const form = box.querySelector('form')!;
+
+    function run(raw: string) {
+      const q = norm(raw);
+      if (!q) { list.innerHTML = ''; empty.hidden = true; return []; }
+      const res = data.map((it) => ({ it, s: score(it, q) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, mode === 'page' ? 30 : 8);
+      list.innerHTML = res.map(({ it }) => `<li><a href="${esc(it.url)}"><span class="sr-title">${esc(it.title)}</span><span class="sr-meta">${esc(label[it.k] || '')}${it.meta ? ' · ' + esc(it.meta) : ''}</span><span class="sr-desc">${esc(it.desc)}</span></a></li>`).join('');
+      empty.hidden = res.length > 0;
+      return res;
+    }
+    input.addEventListener('input', () => run(input.value));
+    form.addEventListener('submit', (ev) => {
+      const res = run(input.value);
+      if (mode === 'live' && res.length === 1) { ev.preventDefault(); location.href = res[0].it.url; }
+      if (mode === 'page') { ev.preventDefault(); const url = new URL(location.href); url.searchParams.set('q', input.value); history.replaceState(null, '', url); }
+    });
+    if (mode === 'page') {
+      const q = new URLSearchParams(location.search).get('q') || '';
+      if (q) { input.value = q; run(q); }
+    }
+  });
+</script>

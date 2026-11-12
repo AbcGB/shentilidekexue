@@ -1,0 +1,26 @@
+---
+import ReviewBadge from './ReviewBadge.astro';
+import { entryLink, u } from '../lib/url';
+import type { LearningEntry } from '../lib/data';
+interface Props { entries: LearningEntry[]; showDate?: boolean }
+const { entries, showDate = false } = Astro.props;
+---
+<ul class="update-list">
+  {entries.map((e) => (
+    <li class="update-item">
+      <div class="update-time">{showDate ? <span class="small">{e.date.slice(5)}<br /></span> : null}{e.time || '--:--'}</div>
+      <div>
+        <a class="update-title" href={entryLink(e)}>{e.title}</a>
+        <div class="update-meta">
+          <span class="badge">{e.type}</span>
+          <span class="badge badge-gray">{e.publishStatus}</span>
+          <ReviewBadge status={e.reviewStatus} />
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <a class="btn btn-outline" href={entryLink(e)}>查看详情</a>
+        {e.type === '穴位视频' && e.acupoints?.length === 1 && <a class="btn" href={u(`/teacher/${e.acupoints[0]}/`)}>复制文案</a>}
+      </div>
+    </li>
+  ))}
+</ul>

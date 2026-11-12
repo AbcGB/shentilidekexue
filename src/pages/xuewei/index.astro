@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import PointCard from '../../components/PointCard.astro';
+import Search from '../../components/Search.astro';
+import { getAcupointsOrdered } from '../../lib/data';
+import { u } from '../../lib/url';
+const points = getAcupointsOrdered();
+const meridians = Array.from(new Set(points.map((p: any) => p.meridian)));
+---
+<Base title="人体穴位知识库：常用穴位位置与经络归属" path="/xuewei/" description="身体里的科学·人体穴位知识库：按经络整理足三里、阳陵泉、三阴交、外关、后溪、神门等常用穴位的标准位置、简便找法与传统经络知识。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 穴位知识库</div>
+    <h1>人体穴位知识库</h1>
+    <p class="muted">目前收录 {points.length} 个穴位，持续增加中。每个穴位都有独立页面，包含标准位置、所属经络、传统经络理论中的相关应用、定位演示与参考资料。</p>
+    <p class="notice">本知识库内容整理自国家标准与针灸教材，目前均为<strong>待审核</strong>状态，正在等待专业老师核对。</p>
+    <div style="margin:16px 0"><Search mode="live" /></div>
+    <h2>全部穴位</h2>
+    <div class="grid grid-3">{points.map((p) => <PointCard p={p} />)}</div>
+    <h2>按经络浏览</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>经络</th><th>穴位</th></tr></thead>
+        <tbody>
+          {meridians.map((m) => (
+            <tr><td>{m}</td><td>{points.filter((p: any) => p.meridian === m).map((p: any, i: number) => <>{i > 0 && '、'}<a href={u(`/xuewei/${p.slug}/`)}>{p.displayName}</a></>)}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Base>

@@ -1,0 +1,88 @@
+---
+import Base from '../../layouts/Base.astro';
+import CopyRuntime from '../../components/CopyRuntime.astro';
+import ReviewBadge from '../../components/ReviewBadge.astro';
+import { getAcupoints, accountSettings } from '../../lib/data';
+import { alignCopies, buildCopyMap, keywordsText, hashtagsText } from '../../lib/copy-core.mjs';
+import { u } from '../../lib/url';
+
+export function getStaticPaths() {
+  return getAcupoints().map((p: any) => ({ params: { slug: p.slug }, props: { p } }));
+}
+const { p } = Astro.props as any;
+const rows = alignCopies(p, accountSettings);
+const map = buildCopyMap(p, accountSettings);
+const art = p.wechatArticle || { status: '待制作' };
+const groups = [
+  { key: 'title', h: '一、六个视频标题', btn: '复制标题', text: (c: any) => c.title },
+  { key: 'description', h: '二、六个视频描述', btn: '复制描述', text: (c: any) => c.description },
+  { key: 'keywords', h: '三、六组 SEO 关键词（整组复制）', btn: '复制关键词', text: (c: any) => keywordsText(c, accountSettings) },
+  { key: 'hashtags', h: '四、话题标签', btn: '复制话题', text: (c: any) => hashtagsText(c, accountSettings) },
+];
+const times = (a: any) => (a.publishTimes?.length ? a.publishTimes.join(' / ') : '发布时间待定');
+---
+<Base title={`${p.displayName}·六账号发布文案（老师工作台）`} path={`/teacher/${p.slug}/`} noindex description="内部使用的发布文案工作台。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/teacher/')}>老师工作台</a> › {p.displayName}</div>
+    <h1>{p.displayName} · 六账号发布内容</h1>
+    <p class="muted small">{p.meridian} · 文案更新：{p.updateDate} · 穴位资料：<a href={u(`/xuewei/${p.slug}/`)}>查看公开页面</a></p>
+    <p class="notice"><strong>{p.copyStatus || '请人工确认后再发布'}。</strong>以下文案为 AI 辅助起草，发布前请负责人或专业老师确认；穴位知识状态：<ReviewBadge status={p.reviewStatus} />。</p>
+
+    <div class="wb-top">
+      <div><strong>一键复制六个账号的全部内容</strong><div class="small muted">方便直接发到工作群</div></div>
+      <button class="btn btn-lg" type="button" data-copy-key="all">复制全部六组内容</button>
+    </div>
+
+    {groups.map((g) => (
+      <section class="wb-group" data-group={g.key}>
+        <h2>{g.h}</h2>
+        {rows.map(({ account, copy }, i) => (
+          <div class="wb-row" data-account={account.id}>
+            <div>
+              <div class="wb-acc"><span class="num">{i + 1}</span>{account.name}</div>
+              <div class="wb-text" data-field={g.key}>{copy ? (g.text(copy) || '（无）') : '（缺少文案）'}</div>
+            </div>
+            {copy && <button class="btn btn-outline" type="button" data-copy-key={`${g.key}:${account.id}`}>{g.btn}</button>}
+          </div>
+        ))}
+      </section>
+    ))}
+
+    <section class="wb-group" data-group="account">
+      <h2>五、按账号整组复制（标题 + 描述 + 关键词 + 话题标签）</h2>
+      {rows.map(({ account, copy }, i) => (
+        <div class="wb-row" data-account={account.id}>
+          <div>
+            <div class="wb-acc"><span class="num">{i + 1}</span>{account.name}</div>
+            <div class="small wb-times">平台：{account.platform} · 建议发布时间：{times(account)}</div>
+          </div>
+          {copy && <button class="btn" type="button" data-copy-key={`account:${account.id}`}>复制该账号全部发布内容</button>}
+        </div>
+      ))}
+    </section>
+
+    <section class="wb-group" data-group="article">
+      <h2>六、微信公众号文章正文（可选）</h2>
+      {art.body ? (
+        <>
+          <div class="wb-row"><div><div class="wb-acc">状态</div><div class="wb-text"><span class="badge badge-warn">{art.status}</span></div></div></div>
+          {[
+            ['title', '文章标题', art.title], ['summary', '摘要', art.summary], ['keywords', '关键词', map['article:keywords']],
+            ['coverTitle', '封面标题', art.coverTitle], ['coverImageSuggestion', '封面图片建议', art.coverImageSuggestion], ['body', '正文（Markdown 格式）', art.body],
+          ].map(([k, label, val]) => (
+            <div class="wb-row">
+              <div><div class="wb-acc">{label}</div><div class="wb-text">{val}</div></div>
+              <button class="btn btn-outline" type="button" data-copy-key={`article:${k}`}>复制{label.replace(/（.*）/, '')}</button>
+            </div>
+          ))}
+        </>
+      ) : (
+        <div class="wb-row"><div><div class="wb-acc">状态</div><div class="wb-text"><span class="badge badge-gray">待制作</span> 本期只制作短视频，公众号文章正文暂未制作。公众号可先使用上面的标题、描述和关键词。</div></div></div>
+      )}
+    </section>
+
+    <p class="small muted">提示：如果按钮无法复制，会弹出文字框，请手动全选复制。也可以直接长按上面的文字进行选择。</p>
+    <script type="application/json" id="copy-data" set:html={JSON.stringify(map).replace(/</g, '\\u003c')} />
+  </div>
+  <CopyRuntime />
+</Base>

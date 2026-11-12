@@ -1,0 +1,57 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryCard from '../../components/EntryCard.astro';
+import { getLearning, getAcupoints } from '../../lib/data';
+import { u } from '../../lib/url';
+const entries = getLearning();
+const all = getAcupoints();
+const uniq = (a: string[]) => Array.from(new Set(a.filter(Boolean)));
+const dates = uniq(entries.map((e) => e.date));
+const types = uniq(entries.map((e) => e.type));
+const teachers = uniq(entries.flatMap((e) => e.teachers || []));
+const pointNames = uniq(entries.flatMap((e) => (e.acupoints || []).map((s) => all.find((p: any) => p.slug === s)?.name)));
+const meridians = uniq(entries.flatMap((e) => (e.acupoints || []).map((s) => all.find((p: any) => p.slug === s)?.meridian)));
+---
+<Base title="历史更新：按日期、穴位、经络查找往期内容" path="/learning/archive/" description="身体里的科学·历史更新：按日期、穴位、经络、内容类型、老师和关键词查找过去发布的学习内容与视频文案。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/learning/today/')}>今日学习</a> › 历史更新</div>
+    <h1>历史更新</h1>
+    <p class="muted">不用再翻微信群：选择条件即可找到过去的内容和对应的发布文案。</p>
+    <form class="filters" id="filters" onsubmit="return false">
+      <label>日期<select name="date"><option value="">全部日期</option>{dates.map((d) => <option>{d}</option>)}</select></label>
+      <label>穴位<select name="point"><option value="">全部穴位</option>{pointNames.map((d) => <option>{d}</option>)}</select></label>
+      <label>经络<select name="meridian"><option value="">全部经络</option>{meridians.map((d) => <option>{d}</option>)}</select></label>
+      <label>内容类型<select name="type"><option value="">全部类型</option>{types.map((d) => <option>{d}</option>)}</select></label>
+      <label>老师<select name="teacher"><option value="">全部老师</option>{teachers.map((d) => <option>{d}</option>)}</select></label>
+      <label>关键词<input name="kw" type="search" placeholder="如：后溪、定位" /></label>
+    </form>
+    <p class="small muted" id="count">共 {entries.length} 条</p>
+    <div id="entries">{entries.map((e) => <EntryCard e={e} />)}</div>
+    <p class="placeholder" id="none" hidden>没有符合条件的内容。</p>
+  </div>
+  <script>
+    const form = document.getElementById('filters') as HTMLFormElement;
+    const items = Array.from(document.querySelectorAll<HTMLElement>('#entries .entry'));
+    function apply() {
+      const f = new FormData(form);
+      const v = (k: string) => String(f.get(k) || '').trim();
+      const kw = v('kw').toLowerCase().replace(/穴/g, '');
+      let n = 0;
+      for (const el of items) {
+        const d = el.dataset;
+        const ok = (!v('date') || d.date === v('date')) && (!v('type') || d.type === v('type'))
+          && (!v('point') || (d.points || '').split('|').includes(v('point')))
+          && (!v('meridian') || (d.meridians || '').split('|').includes(v('meridian')))
+          && (!v('teacher') || (d.teachers || '').split('|').includes(v('teacher')))
+          && (!kw || (d.text || '').includes(kw));
+        el.hidden = !ok; if (ok) n++;
+      }
+      document.getElementById('count')!.textContent = `共 ${n} 条`;
+      document.getElementById('none')!.hidden = n > 0;
+    }
+    form.addEventListener('input', apply); form.addEventListener('change', apply);
+    const params = new URLSearchParams(location.search);
+    for (const k of ['date', 'point', 'meridian', 'type', 'teacher', 'kw']) { const val = params.get(k); if (val) (form.elements.namedItem(k) as HTMLInputElement).value = val; }
+    apply();
+  </script>
+</Base>

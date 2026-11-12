@@ -1,0 +1,87 @@
+---
+import Base from '../layouts/Base.astro';
+import Search from '../components/Search.astro';
+import UpdateList from '../components/UpdateList.astro';
+import PointCard from '../components/PointCard.astro';
+import { site, getAcupoints, getAcupointsOrdered, getLearning, latestDate, equipment, siteUrl } from '../lib/data';
+import { u } from '../lib/url';
+
+const points = getAcupoints();
+const latest = latestDate();
+const learning = getLearning();
+const todays = learning.filter((e) => e.date === latest);
+const newest = [...getAcupointsOrdered()].sort((a, b) => (b.publishDate || '').localeCompare(a.publishDate || '')).slice(0, 6);
+const hot = site.hotAcupoints.map((s: string) => points.find((p: any) => p.slug === s)).filter(Boolean);
+const deviceEntries = learning.filter((e) => e.type === '设备演示').slice(0, 3);
+const materials = learning.filter((e) => e.type === '学习资料').slice(0, 4);
+const jsonLd = { '@context': 'https://schema.org', '@type': 'WebSite', name: site.siteName, url: siteUrl() + '/', description: site.seo.defaultDescription, inLanguage: 'zh-CN' };
+---
+<Base title={`${site.siteName}｜${site.homeTitle}：穴位位置、经络知识与多普勒定位演示`} fullTitle path="/" jsonLd={jsonLd} keywords={['身体里的科学', '人体穴位科普', '穴位定位', '皮门多普勒', '多普勒定位演示']}>
+  <section class="hero">
+    <div class="container">
+      <p class="brand-line">{site.siteName} · {site.slogan}</p>
+      <h1>{site.homeTitle}</h1>
+      <p class="subtitle">{site.homeSubtitle}</p>
+      <Search mode="live" />
+      <nav class="quick" aria-label="快捷入口">
+        <a href={u('/xuewei/')}><span class="ico">穴</span>人体穴位</a>
+        <a href={u('/learning/today/')}><span class="ico">今</span>今日学习</a>
+        <a href={u('/equipment/')}><span class="ico">演</span>设备演示</a>
+        <a href={u('/teacher/')}><span class="ico">✎</span>老师工作台</a>
+      </nav>
+    </div>
+  </section>
+
+  <div class="container">
+    <section>
+      <div class="section-head">
+        <h2>今日更新 <span class="small muted" data-today-label data-latest={latest}>（{latest}）</span></h2>
+        <a href={u('/learning/today/')}>查看今日学习 →</a>
+      </div>
+      {todays.length > 0 ? <UpdateList entries={todays} /> : <p class="placeholder">暂时还没有更新内容。</p>}
+    </section>
+
+    <section>
+      <div class="section-head"><h2>最新穴位</h2><a href={u('/xuewei/')}>全部穴位 →</a></div>
+      <div class="grid grid-3">{newest.map((p) => <PointCard p={p} />)}</div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>热门穴位</h2></div>
+      <div class="toc">{hot.map((p: any) => <a href={u(`/xuewei/${p.slug}/`)}>{p.displayName} · {p.meridian}</a>)}</div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>最新设备演示</h2><a href={u('/equipment/')}>进入 {equipment.title} →</a></div>
+      <div class="card">
+        <h3 style="margin-top:0">{equipment.title}</h3>
+        <p>{equipment.intro}</p>
+        <p class="notice">真实设备照片与定位演示视频待负责人提供。本站不使用 AI 生成或来源不明的设备图片。</p>
+        {deviceEntries.length > 0 && <UpdateList entries={deviceEntries} showDate />}
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>学习资料</h2><a href={u('/ziliao/')}>全部学习资料 →</a></div>
+      {materials.length > 0 ? <UpdateList entries={materials} showDate /> : <p class="placeholder">学习资料整理中。</p>}
+    </section>
+
+    <section>
+      <h2>品牌介绍</h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>{site.siteName}</strong>（{site.slogan}）是一个人体穴位知识库与新媒体内容中心：整理常用穴位的标准位置、所属经络与传统经络知识，记录丁老师研发的皮门多普勒设备的真实定位演示过程，并为团队医生和老师提供每日发布内容。</p>
+        <p class="small muted">网站中尚未经专业老师确认的内容均明确标注“待审核”。传统经络理论中的应用不等同于现代医学已证实的疗效。</p>
+        <a href={u('/about/')}>了解更多 →</a>
+      </div>
+    </section>
+  </div>
+  <script>
+    // 判断最新更新是否为“今天”（按北京时间）
+    const el = document.querySelector<HTMLElement>('[data-today-label]');
+    if (el) {
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+      const latest = el.dataset.latest || '';
+      el.textContent = latest === today ? `（今天 ${latest}）` : `（最近更新：${latest}）`;
+    }
+  </script>
+</Base>

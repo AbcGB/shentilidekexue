@@ -1,0 +1,65 @@
+---
+import Base from '../../layouts/Base.astro';
+import ReviewBadge from '../../components/ReviewBadge.astro';
+import { getAcupointsOrdered, getLearning, latestDate, accountSettings } from '../../lib/data';
+import { sortedAccounts } from '../../lib/copy-core.mjs';
+import { u } from '../../lib/url';
+const points = getAcupointsOrdered();
+const latest = latestDate();
+const todays = getLearning().filter((e) => e.date === latest && e.type === '穴位视频');
+const accounts = sortedAccounts(accountSettings);
+---
+<Base title="老师工作台：六账号发布文案" path="/teacher/" noindex description="内部使用的发布文案工作台。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 老师工作台</div>
+    <h1>老师工作台</h1>
+    <p class="muted">打开当天的穴位 → 找到自己的账号 → 复制标题、描述、关键词 → 粘贴到平台发布 → 把链接或截图发到工作群。</p>
+    <p class="notice">本页为内部工作页面（已设置搜索引擎不收录），但没有登录保护，任何拿到链接的人都能看到。请不要在这里放患者资料、个人隐私或其他敏感内容。所有文案需人工确认后再发布。</p>
+
+    <h2>今日需要发布 <span class="small muted">（{latest}）</span></h2>
+    {todays.length > 0 ? (
+      <ul class="update-list">
+        {todays.map((e) => (
+          <li class="update-item">
+            <div class="update-time">{e.time}</div>
+            <div><div class="update-title">{e.title}</div><div class="update-meta"><span class="badge badge-gray">{e.publishStatus}</span><ReviewBadge status={e.reviewStatus} /></div></div>
+            <div>{e.acupoints?.[0] && <a class="btn" href={u(`/teacher/${e.acupoints[0]}/`)}>打开文案</a>}</div>
+          </li>
+        ))}
+      </ul>
+    ) : <p class="placeholder">今天暂无指定的发布视频，可在下面选择穴位。</p>}
+
+    <h2>全部穴位文案</h2>
+    <label class="small muted" for="wb-filter">快速查找穴位</label>
+    <input id="wb-filter" type="search" placeholder="输入穴位名称或拼音，例如：后溪 / houxi" style="width:100%;height:44px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-size:1rem;margin:4px 0 12px" />
+    <div class="grid grid-3" id="wb-list">
+      {points.map((p: any) => (
+        <a class="card point-card" href={u(`/teacher/${p.slug}/`)} data-filter={`${p.name} ${p.aliases.join(' ')} ${p.pinyin.replace(/\s/g, '')} ${p.pinyin.split(' ').map((s: string) => s[0]).join('')} ${p.meridian}`.toLowerCase()}>
+          <h3>{p.displayName}</h3>
+          <div class="meta">{p.meridian}</div>
+          <p>六组文案 · 更新 {p.updateDate}{p.wechatArticle?.body ? ' · 含公众号正文' : ' · 公众号正文待制作'}</p>
+        </a>
+      ))}
+    </div>
+
+    <h2>账号与发布时间</h2>
+    <p class="small muted">以下账号名称和发布时间都可以由管理员在 <code>src/content/accounts/account-settings.json</code> 中修改。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>序号</th><th>账号</th><th>平台</th><th>建议发布时间</th><th>说明</th></tr></thead>
+        <tbody>
+          {accounts.map((a: any, i: number) => <tr><td>{i + 1}</td><td>{a.name}</td><td>{a.platform}</td><td>{a.publishTimes.length ? a.publishTimes.join('、') : '待定'}</td><td>{a.note}</td></tr>)}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const input = document.getElementById('wb-filter') as HTMLInputElement;
+    input?.addEventListener('input', () => {
+      const q = input.value.trim().toLowerCase().replace(/穴/g, '').replace(/\s/g, '');
+      document.querySelectorAll<HTMLElement>('#wb-list [data-filter]').forEach((el) => {
+        el.style.display = !q || el.dataset.filter!.replace(/\s/g, ' ').split(' ').some((w) => w.includes(q)) || el.dataset.filter!.includes(q) ? '' : 'none';
+      });
+    });
+  </script>
+</Base>
