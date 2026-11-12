@@ -69,6 +69,7 @@ export function siteUrl(): string {
 export type Lesson = {
   order: number; slug: string; title: string; seoTitle?: string; description: string; keywords?: string[];
   minutes?: number; reviewStatus: string; updateDate: string; diagram?: string; showAcupoints?: boolean; evidenceNote?: boolean;
+  quickAnswers?: string[];
   Content: any;
 };
 const lessonModules = import.meta.glob('../content/lessons/*.md', { eager: true });

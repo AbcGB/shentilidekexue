@@ -1,4 +1,5 @@
 ---
+import QuickAnswer from '../components/QuickAnswer.astro';
 import Base from '../layouts/Base.astro';
 import Search from '../components/Search.astro';
 import UpdateList from '../components/UpdateList.astro';
@@ -42,10 +43,8 @@ const jsonLd = { '@context': 'https://schema.org', '@type': 'WebSite', name: sit
   <div class="container">
     <section>
       <div class="section-head"><h2>什么是皮穿支</h2><a href={u(`/xuexi/${lessons[0].slug}/`)}>读第 1 课 →</a></div>
-      <div class="card">
-        <p style="margin-top:0"><strong>皮穿支</strong>是从较深层血管发出、穿过深筋膜、去营养皮下组织和皮肤的细小血管。它在整形与显微外科里是成熟的解剖术语，穿支皮瓣手术就靠它供血。</p>
-        <p>近年有研究观察到，皮穿支的穿出点与部分腧穴位置相近。这是正在积累的初步证据，样本规模有限，也存在有穿支而无对应穴位的情况，<strong>不能说“穴位就是皮穿支”</strong>。本站把已确立的解剖知识和仍在研究中的问题分开讲。</p>
-      </div>
+      <QuickAnswer ids={['definition', 'acupoints']} headingLevel={3} />
+      <p class="small muted">本站把已确立的解剖知识和仍在研究中的问题分开讲。</p>
     </section>
 
     <section>

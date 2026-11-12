@@ -1,0 +1,39 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getLessons, getAcupointsOrdered, getDrafts, equipment, filmingList } from '../../lib/data';
+import qa from '../../content/quick-answers.json';
+import { buildReviewQueue } from '../../lib/review-core.mjs';
+import { u } from '../../lib/url';
+const q = buildReviewQueue({ lessons: getLessons(), acupoints: getAcupointsOrdered(), drafts: getDrafts(), device: equipment, answers: qa.answers, filming: filmingList });
+---
+<Base title="学习循环与审核进度（老师工作台）" path="/teacher/shenhe/" noindex description="内部页面：网站内容从资料到上线的学习循环，以及当前待资料、待确认、待审核的内容。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/teacher/')}>老师工作台</a> › 学习循环与审核</div>
+    <h1>学习循环与审核进度</h1>
+    <p class="muted">网站的“自我学习”不是网页里的 AI 自己写内容，而是一个看得见的循环：</p>
+    <ol class="loop-steps">
+      <li><strong>资料进来</strong>：负责人和老师提供原文、课件、论文、拍摄素材。</li>
+      <li><strong>起草/整理</strong>：视频文案可以用本地脚本按穴位资料起草（6—10 组）；课文和穴位知识由团队整理成稿。</li>
+      <li><strong>待确认/待审核</strong>：草稿只在“待确认草稿”里给负责人看；公开的医学和学习内容一律标“待审核”。</li>
+      <li><strong>确认后上线</strong>：负责人确认的文案才进入老师工作台；专业老师审核后才改为“已审核”。没有资料的地方留空，不编造。</li>
+    </ol>
+    <p class="small muted">本网站是静态网站，不能在网页上保存修改，也不会自动发布任何内容。确认和审核意见请在对话或工作群里告诉负责人。下面的清单在每次构建时根据内容文件自动统计；在电脑上运行 <code>npm run status</code> 可以看到同样的内容。</p>
+
+    <h2>① 等待资料（{q.materials.length}）</h2>
+    {q.materials.length ? <ul>{q.materials.map((m) => <li>{m.what} <span class="small muted">→ {m.where}（{m.who}）</span></li>)}</ul> : <p class="placeholder">暂无。</p>}
+
+    <h2>② 文案草稿，待负责人确认（{q.drafts.length}）</h2>
+    {q.drafts.length ? <ul>{q.drafts.map((d) => <li><a href={u(`/teacher/drafts/${d.slug}/`)}>{d.name}</a> <span class="small muted">{d.groups} 组 · 生成于 {d.generatedAt}</span></li>)}</ul> : <p class="placeholder">暂无。</p>}
+
+    <h2>③ 已公开、待专业审核（{q.review.length}）</h2>
+    <p class="small muted">这些内容已在网站上公开，页面上都标着“待审核”。专业老师审核后，在对应文件里填写真实的审核老师和日期，才会显示“已审核”。</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>类型</th><th>内容</th></tr></thead>
+      <tbody>{q.review.map((r) => <tr><td>{r.kind}</td><td><a href={u(r.href)}>{r.name}</a></td></tr>)}</tbody>
+    </table></div>
+
+    <h2>④ 已确认</h2>
+    <p>正式文案：{q.confirmed.officialCopy.length ? q.confirmed.officialCopy.map((x, i) => <>{i > 0 && '、'}<a href={u(`/teacher/${x.slug}/`)}>{x.name}</a>（{x.groups} 组）</>) : '暂无'}。</p>
+    <p>专业审核通过：{q.confirmed.reviewed.length ? q.confirmed.reviewed.join('、') : '暂无（所有公开内容目前都是待审核）'}。</p>
+  </div>
+</Base>

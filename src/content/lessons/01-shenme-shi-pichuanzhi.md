@@ -7,6 +7,7 @@ description: "皮穿支是从较深层血管发出、穿过深筋膜、去营养
 keywords: ["皮穿支", "什么是皮穿支", "皮穿支血管", "穿支血管", "皮肤穿支", "深筋膜"]
 minutes: 6
 reviewStatus: "待审核"
+quickAnswers: ["definition"]
 updateDate: "2026-11-13"
 ---
 

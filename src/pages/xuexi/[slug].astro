@@ -4,6 +4,7 @@ import LessonProgress from '../../components/LessonProgress.astro';
 import LayerDiagram from '../../components/LayerDiagram.astro';
 import PointCard from '../../components/PointCard.astro';
 import ReviewBadge from '../../components/ReviewBadge.astro';
+import QuickAnswer from '../../components/QuickAnswer.astro';
 import { getLessons, getAcupointsOrdered, site, siteUrl } from '../../lib/data';
 import { u } from '../../lib/url';
 
@@ -38,6 +39,7 @@ const jsonLd = {
     </div>
     <h1>{l.title}</h1>
     {l.evidenceNote && <p class="notice"><strong>证据说明：</strong>本课介绍的是正在进行中的研究，结论尚无定论。本站不把“穴位就是皮穿支”写成已证实的事实，相关内容待专业老师审核。</p>}
+    {l.quickAnswers?.length > 0 && <QuickAnswer ids={l.quickAnswers} links={false} />}
     <article class="prose lesson">
       {l.diagram === 'layers' && <LayerDiagram />}
       <Content />
@@ -49,7 +51,7 @@ const jsonLd = {
         <div class="grid grid-3">{points.map((p: any) => <PointCard p={p} />)}</div>
       </section>
     )}
-    {l.slug === 'duopule-dingwei' && <p class="small"><a href={u('/equipment/')}>查看设备演示栏目 →</a></p>}
+    {l.slug === 'duopule-dingwei' && <p class="small"><a href={u('/equipment/')}>皮门多普勒：设备介绍、培训与定位演示 →</a></p>}
 
     <nav class="lp-nav" aria-label="课程导航">
       <div>{prev ? <a class="btn btn-outline" href={u(`/xuexi/${prev.slug}/`)}>← 上一课</a> : <a class="btn btn-outline" href={u('/xuexi/')}>← 课程目录</a>}</div>

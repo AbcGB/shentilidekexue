@@ -1,4 +1,5 @@
 ---
+import QuickAnswer from '../../components/QuickAnswer.astro';
 import Base from '../../layouts/Base.astro';
 import UpdateList from '../../components/UpdateList.astro';
 import ReviewBadge from '../../components/ReviewBadge.astro';
@@ -10,10 +11,10 @@ const entries = getLearning().filter((e) => e.type === '设备演示');
 ---
 <Base title="皮门多普勒：丁志伟老师研发的穴位定位演示设备与培训" path="/equipment/" description="皮门多普勒是丁志伟老师研发的多普勒设备，用于穴位定位演示。本页介绍设备用途、外观、操作过程、设备培训与相关研究。只记录真实操作过程，不宣称百分之百精准或治疗效果。" keywords={['皮门多普勒', '皮门', '丁志伟', '多普勒定位演示', '皮穿支', '穴位定位', '设备培训', '身体里的科学']}>
   <div class="container">
-    <div class="breadcrumb"><a href={u('/')}>首页</a> › 设备演示</div>
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 皮门多普勒</div>
     <h1>{eq.title}</h1>
     <div class="detail-meta"><ReviewBadge status={eq.reviewStatus} /><span class="small muted">更新时间：{eq.updateDate}</span></div>
-    <p>{eq.intro}</p>
+    <QuickAnswer ids={['pimen']} links={false} />
     <ul class="eq-highlights">{eq.highlights.map((h: string) => <li>{h}</li>)}</ul>
     <nav class="toc" aria-label="本页目录"><a href="#training">设备培训</a><a href="#research">相关研究与专利</a><a href="#demos">各穴位定位演示</a><a href={u('/xuexi/duopule-dingwei/')}>多普勒怎么找皮穿支</a></nav>
     <div class="notice"><strong>说明：</strong><ul style="margin:4px 0 0;padding-left:1.2em">{eq.statement.map((s: string) => <li>{s}</li>)}</ul></div>

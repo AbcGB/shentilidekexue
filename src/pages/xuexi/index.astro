@@ -1,14 +1,22 @@
 ---
 import Base from '../../layouts/Base.astro';
 import LessonProgress from '../../components/LessonProgress.astro';
+import QuickAnswer from '../../components/QuickAnswer.astro';
+import qa from '../../content/quick-answers.json';
 import { getLessons, site, siteUrl } from '../../lib/data';
 import { u } from '../../lib/url';
 const lessons = getLessons();
 const order = lessons.map((l) => ({ slug: l.slug, title: l.title, href: u(`/xuexi/${l.slug}/`) }));
 const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+// 结构化数据只描述页面上看得到的内容：课程列表 + 下面的“简短回答”
 const jsonLd = {
-  '@context': 'https://schema.org', '@type': 'ItemList', name: '皮穿支学习路径', inLanguage: 'zh-CN',
-  itemListElement: lessons.map((l, i) => ({ '@type': 'ListItem', position: i + 1, name: l.title, url: `${siteUrl()}${base}/xuexi/${l.slug}/` })),
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'ItemList', name: '皮穿支学习路径', inLanguage: 'zh-CN',
+      itemListElement: lessons.map((l, i) => ({ '@type': 'ListItem', position: i + 1, name: l.title, url: `${siteUrl()}${base}/xuexi/${l.slug}/` })) },
+    { '@type': 'FAQPage', inLanguage: 'zh-CN',
+      mainEntity: qa.answers.map((a) => ({ '@type': 'Question', name: a.q, acceptedAnswer: { '@type': 'Answer', text: a.a } })) },
+  ],
 };
 const totalMin = lessons.reduce((n, l) => n + (l.minutes || 0), 0);
 ---
@@ -30,6 +38,9 @@ const totalMin = lessons.reduce((n, l) => n + (l.minutes || 0), 0);
       <p class="small muted" style="margin:8px 0 0">进度只保存在这台设备的浏览器里，不需要登录；换手机、换浏览器或清理浏览器数据后会重新开始。<button type="button" class="linklike" data-lp-reset>清空进度</button></p>
     </div>
 
+    <QuickAnswer ids={qa.answers.map((a) => a.id)} />
+
+    <p class="small muted" style="margin-bottom:4px"><strong>课程目录</strong>（共 {lessons.length} 课）</p>
     <ol class="lp-list">
       {lessons.map((l, i) => (
         <li class="card lp-item">

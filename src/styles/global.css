@@ -249,3 +249,11 @@ dl.info dd { margin: 0; }
 .draft-card { border-style: dashed; }
 .draft-card .wb-head { background: #fbf3e4; }
 #jd-table th, #jd-table td { white-space: nowrap; }
+
+/* 简短回答（GEO / 可引用的短答） */
+.quick-answer { background: #f5f8fc; border: 1px solid var(--border); border-left: 4px solid var(--navy-2); border-radius: var(--radius); padding: 12px 16px; margin: 14px 0; }
+.quick-answer .qa-title { font-size: 1rem; margin: 0 0 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.quick-answer .qa-q { font-size: 1rem; margin: 10px 0 4px; }
+.quick-answer .qa-a { margin: 0; }
+.quick-answer .qa-more { margin: 4px 0 0; }
+.loop-steps li { margin: 4px 0; }

@@ -1,0 +1,21 @@
+---
+// 简短回答：页面上可见的问答块，方便读者和搜索/AI 问答准确引用。内容见 src/content/quick-answers.json。
+import qa from '../content/quick-answers.json';
+import ReviewBadge from './ReviewBadge.astro';
+import { u } from '../lib/url';
+interface Props { ids: string[]; title?: string; links?: boolean; headingLevel?: 2 | 3 }
+const { ids, title = '简短回答', links = true, headingLevel = 2 } = Astro.props;
+const items = ids.map((id) => qa.answers.find((a) => a.id === id)).filter(Boolean) as typeof qa.answers;
+const H = `h${headingLevel}`;
+const H2 = `h${headingLevel + 1}`;
+---
+<section class="quick-answer" aria-label={title}>
+  <H class="qa-title">{title} <ReviewBadge status={items.every((a) => a.reviewStatus === '已审核') ? '已审核' : '待审核'} /></H>
+  {items.map((a) => (
+    <div class="qa-item" id={`qa-${a.id}`}>
+      <H2 class="qa-q">{a.q}</H2>
+      <p class="qa-a">{a.a}</p>
+      {links && a.link && <p class="small qa-more"><a href={u(a.link)}>详细：{a.linkText} →</a></p>}
+    </div>
+  ))}
+</section>
