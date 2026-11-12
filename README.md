@@ -27,6 +27,9 @@
 | 历史更新（按日期、穴位、经络、类型、老师、关键词筛选） | `/learning/archive/` | 老师 |
 | 皮门多普勒（设备介绍、培训、相关研究与专利、定位演示） | `/equipment/` | 所有人 |
 | 老师工作台（每条视频 N 组文案 + 复制次数） | `/teacher/`，已录入文案的穴位 `/teacher/zusanli/` 等 | 老师（不被搜索引擎收录） |
+| 待负责人确认的文案草稿 | `/teacher/drafts/`，每个穴位 `/teacher/drafts/waiguan/` 等 | 负责人（老师请勿使用，不被收录） |
+| 全身经穴拍摄清单（文案状态、筛选） | `/teacher/jindu/` | 老师（不被收录） |
+| 20—30 秒定位视频拍摄建议 | `/teacher/paishe/` | 拍摄老师（不被收录） |
 | 管理员复制统计页 | `/admin/stats/` | 管理员（需管理口令，不被收录） |
 | 学习资料 | `/ziliao/` | 所有人 |
 | 意见反馈 | `/feedback/` | 老师 |
@@ -57,6 +60,8 @@ website/
 │     ├─ acupoints/zusanli.json 等      ← 每个穴位一个文件：知识内容 + 视频文案（copySets，组数可变）
 │     ├─ lessons/01-xxx.md 等           ← 皮穿支学习路径的课文，一课一个文件（order 决定顺序）
 │     ├─ articles/zusanli.md 等         ← 每个穴位的公开科普文章（详情页“相关知识”部分）
+│     ├─ drafts/waiguan.json 等         ← 自动生成的文案草稿（待负责人确认，只在 /teacher/drafts/ 显示）
+│     ├─ filming/acupoint-list.json     ← 全身经穴拍摄清单（名称、代码、经络，依据 GB/T 12346-2021）
 │     ├─ learning/2026-11-12-xxx.json   ← 每日学习/更新内容，一条一个文件
 │     └─ equipment/device.json          ← 设备演示专区内容
 ├─ public/
@@ -103,7 +108,7 @@ website/
 - 输入：`npm run build`。它会先**自动检查内容**（例如工作台文案是否写全、JSON 格式是否正确），然后生成一个 `dist` 文件夹——**这个文件夹就是完整的网站**，上传到任何服务器都能用。
 - 想看生成后的效果（**含真实的复制次数统计**）：`npm run preview`，再打开 `http://localhost:4321/`。它会同时启动网站和统计服务，统计数据保存在 `data/stats.sqlite`。
 - 用 `npm run dev` 开发预览时，如果也想看到复制次数，需要**另开一个终端**运行 `npm run api`（统计服务，端口 8787）。
-- 想跑一遍自动验收测试：先 `npm run build`，再运行 `npm test`（网站功能）和 `npm run test:stats`（复制统计）。测试会自动用临时数据库，不会影响你的统计数据。需要电脑上装有 Chrome 浏览器。
+- 想跑一遍自动验收测试：先 `npm run build`，再运行 `npm test`（网站功能 + 草稿隔离检查）和 `npm run test:stats`（复制统计）。测试会自动用临时数据库，不会影响你的统计数据。需要电脑上装有 Chrome 浏览器。
 
 ---
 
@@ -135,6 +140,21 @@ website/
 - 穴位还没有负责人提供的文案时，写 `"copySets": []`：公开知识页照常显示，老师工作台里不出现这个穴位。
 - 描述里要换行，写 `\n`；文字里如果要用英文双引号，写成 `\"`（建议直接用中文引号“”或「」）。
 - 改完后把文件顶部的 `"updateDate"` 改成当天日期。
+
+### 4.1.1 文案草稿：自动起草 → 负责人确认 → 转为正式文案
+
+还没有负责人文案的穴位，可以先自动起草，给负责人看。**草稿不会出现在老师工作台，老师看不到复制按钮。**
+
+- **生成草稿**：`npm run draft:copy`（为所有“已发布但 copySets 为空”的穴位各生成 6 组）。只生成一个穴位：`node scripts/draft-copy.mjs --slug waiguan`；要 7—10 组：加 `--n 8`；覆盖已有草稿：加 `--force`。
+- **怎么起草的**：本地脚本按固定角度拼装，不调用在线 AI，只用穴位文件里已有的名称、代码、经络、部位、特定穴类别、标准定位和简便找法。前 6 组的角度参照负责人给三阴交等穴位的分法：在哪里、怎么找、经络与特定穴、位置介绍 + 定位演示、皮门多普勒设备操作演示、跟着老师认识；第 7—10 组为国家标准定位、体表标志、穴位代码、常见问题。各组是不同的搜索角度，不是同一句话换说法。
+- **不会写的内容**：疗效、针刺/艾灸教学、价格、报名、“穴位就是皮穿支”“百分之百精准”、专利。生成和构建时都会自动检查（规则在 `src/lib/draft-core.mjs` 的 `FORBIDDEN`）。
+- **草稿放在哪里**：`src/content/drafts/穴位拼音.json` 的 `draftCopySets`，状态为“待负责人确认”。已有正式文案（copySets 不为空）的穴位不会生成草稿；如果误放了，构建会报错。
+- **负责人确认**：打开 `/teacher/drafts/穴位拼音/` 看草稿，在对话里告诉我们确认哪几组、改哪些字（网站是静态的，网页上无法直接保存）。
+- **转为正式文案**（只有负责人确认后才做）：`node scripts/promote-draft.mjs --slug waiguan --confirm "负责人 某月某日 在对话中确认"`；只转部分组加 `--groups 1,2,3,5`；先预览加 `--dry-run`。脚本会写入穴位文件的 `copySets`、删除草稿文件；如果该穴位已经有正式文案，脚本会拒绝执行，不会覆盖负责人原文。
+
+### 4.1.2 拍摄清单
+
+`/teacher/jindu/` 按经络列出每个穴位的文案状态（正式文案已确认 / 草稿待确认 / 暂无文案）、有没有公开知识页。清单来自 `src/content/filming/acupoint-list.json`，已有穴位文件的穴位也会自动列入。**完整的全身经穴名单尚未对照标准原文核对**，目前只列出已核对的穴位；补充时请逐条对照 GB/T 12346-2021 原文添加名称、代码、经络。清单里的穴位不会自动生成公开页面或工作台文案。视频拍摄状态可在清单条目里写 `"videoStatus": "已拍摄"`。
 
 ### 4.2 添加今天的更新（今日学习 / 首页今日更新）
 
@@ -172,7 +192,8 @@ website/
 1. 复制 `templates/acupoint-template.json` 到 `src/content/acupoints/`，文件名改成穴位拼音，例如 `neiguan.json`（只用小写字母）。
 2. 打开文件，把 `id`、`slug` 都改成 `neiguan`（必须与文件名一致），然后逐项填写：名称、别名、拼音、经络、标准定位（照国家标准原文）、通俗说法、简便找法、传统应用、参考资料等。
 3. 复制 `templates/article-template.md` 到 `src/content/articles/neiguan.md`，改写成这个穴位的科普文章。
-4. 有负责人提供的视频文案时，按 4.1 录入 `copySets`；暂时没有就写 `"copySets": []`。
+4. 有负责人提供的视频文案时，按 4.1 录入 `copySets`；暂时没有就写 `"copySets": []`，需要的话按 4.1.1 生成草稿给负责人确认。
+   - 同时在 `src/content/filming/acupoint-list.json` 的 `points` 里加一条（名称、代码、经络、slug），拍摄清单就会显示。
 5. 先保持 `"publishStatus": "draft"`（草稿，网站上不显示）。知识内容整理好后改成 `"published"`，公开页面就会出现。文案有问题时只影响工作台，构建时会提示缺了什么。
 6. 构建后会自动生成：`/xuewei/neiguan/` 公开页面（并加入搜索、穴位列表和站点地图）；录入了文案的穴位还会生成 `/teacher/neiguan/` 工作台页面。穴位数量不限，持续增加即可。
 7. 有真实照片时：放到 `public/images/acupoints/neiguan/`，在穴位文件的 `images` 里写 `{ "src": "/images/acupoints/neiguan/1.jpg", "alt": "内关穴定位演示（真实拍摄）", "caption": "说明文字" }`。设备演示照片和视频写在 `dopplerDemo` 的 `photos`/`videos` 里。

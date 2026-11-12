@@ -1,0 +1,32 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getDrafts } from '../../../lib/data';
+import { u } from '../../../lib/url';
+export function getStaticPaths() {
+  return getDrafts().map((d: any) => ({ params: { slug: d.slug }, props: { d } }));
+}
+const { d } = Astro.props as any;
+const p = d.acupoint;
+const set = d.draftCopySets[0];
+---
+<Base title={`${p.displayName} · 文案草稿（待负责人确认）`} path={`/teacher/drafts/${d.slug}/`} noindex description="内部页面：文案草稿，待负责人确认。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/teacher/')}>老师工作台</a> › <a href={u('/teacher/drafts/')}>待确认草稿</a> › {p.displayName}</div>
+    <h1>{p.displayName} · {set.variants.length} 组文案草稿</h1>
+    <div class="notice draft-banner">
+      <strong>{d.status}：仅供负责人确认，老师请勿复制使用。</strong>
+      本页没有复制按钮，也不计复制次数。确认或修改意见请在对话里告诉我们，确认后才会转为正式文案、出现在老师工作台。
+    </div>
+    <p class="small muted">{p.meridian} · 生成于 {d.generatedAt} · {d.generator} · 只使用了穴位资料中的字段：{d.sourceFields.join('、')} · <a href={u(`/xuewei/${p.slug}/`)}>对照公开知识页</a></p>
+
+    {set.variants.map((v: any) => (
+      <article class="wb-group draft-card">
+        <div class="wb-head"><h2 class="wb-card-title"><span class="wb-no">{v.no}</span><span class="wb-angle">第 {v.no} 组 · 角度：{v.angle}</span></h2><span class="badge badge-warn">草稿</span></div>
+        <div class="wb-row"><div><div class="wb-acc">标题</div><div class="wb-text">{v.title}</div></div></div>
+        <div class="wb-row"><div><div class="wb-acc">描述</div><div class="wb-text">{v.description}</div></div></div>
+        <div class="wb-row"><div><div class="wb-acc">关键词</div><div class="wb-text">{v.keywords}</div></div></div>
+      </article>
+    ))}
+    <p class="small muted">需要 7—10 组时，可以让我们用 <code>node scripts/draft-copy.mjs --slug {d.slug} --n 8 --force</code> 重新生成（第 7—10 组为国家标准定位、体表标志、穴位代码、常见问题等角度）。</p>
+  </div>
+</Base>

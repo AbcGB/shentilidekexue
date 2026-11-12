@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateCopies } from '../src/lib/copy-core.mjs';
+import { forbiddenHits } from '../src/lib/draft-core.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const C = (p) => path.join(root, 'src/content', p);
@@ -40,10 +41,27 @@ for (const f of fs.readdirSync(C('acupoints')).filter((f) => f.endsWith('.json')
   if (p.publishStatus === 'published') {
     published++;
     if (problems.length) warnings.push(`${label} 的工作台文案有问题，本次不会出现在老师工作台（公开知识页不受影响）：\n    - ${problems.join('\n    - ')}`);
-    else if (!p.copySets.length) infos.push(`${p.displayName || f}：公开知识页已发布，工作台文案待负责人提供`);
+    else if (!p.copySets.length) infos.push(`${p.displayName || f}：公开知识页已发布，工作台正式文案待负责人提供（草稿见 /teacher/drafts/）`);
     else workbench++;
   } else {
     warnings.push(`${label} 是草稿（draft），不会出现在网站上${problems.length ? `；还缺：${problems.join('；')}` : ''}`);
+  }
+}
+
+// 草稿检查：已有正式文案的穴位不能再有草稿；草稿不能含禁止的说法
+const dDir = C('drafts');
+if (fs.existsSync(dDir)) {
+  for (const f of fs.readdirSync(dDir).filter((f) => f.endsWith('.json'))) {
+    const d = readJson(path.join(dDir, f));
+    if (!d) continue;
+    const pf = C(`acupoints/${d.slug}.json`);
+    if (!fs.existsSync(pf)) { errors.push(`草稿 ${f} 对应的穴位文件不存在`); continue; }
+    const p = JSON.parse(fs.readFileSync(pf, 'utf8'));
+    if ((p.copySets || []).length) errors.push(`草稿 ${f}：${p.displayName} 已有正式文案（copySets），不能再有待确认草稿，请删除该草稿文件`);
+    for (const v of d.draftCopySets?.[0]?.variants || []) {
+      const hits = forbiddenHits(`${v.title}\n${v.description}`);
+      if (hits.length) errors.push(`草稿 ${f} 第 ${v.no} 组含有禁止的说法：${hits.join('；')}`);
+    }
   }
 }
 

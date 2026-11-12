@@ -1,0 +1,37 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getDrafts } from '../../../lib/data';
+import { u } from '../../../lib/url';
+const drafts = getDrafts();
+---
+<Base title="待负责人确认的文案草稿" path="/teacher/drafts/" noindex description="内部页面：自动生成的文案草稿，待负责人确认。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/teacher/')}>老师工作台</a> › 待确认草稿</div>
+    <h1>待负责人确认的文案草稿</h1>
+    <div class="notice draft-banner">
+      <strong>这里是草稿，不是正式文案，老师请勿复制使用。</strong>
+      草稿由本地脚本按穴位资料里已有的字段（名称、经络、部位、标准定位、简便找法等）自动拼装，没有经过负责人确认，也不会出现在老师工作台。
+    </div>
+    <h2>确认流程</h2>
+    <ol>
+      <li>负责人打开下面的穴位，逐组看标题、描述、关键词。</li>
+      <li>在对话里告诉我们：哪个穴位、确认哪几组、哪些字要改、要不要增减组数（6—10 组都可以）。</li>
+      <li>我们按负责人的意见改好，再把确认的组转为正式文案，这个穴位才会出现在老师工作台。</li>
+    </ol>
+    <p class="small muted">本网站是静态预览网站，没有可以在网页上直接保存的后台，所以确认要在对话里告诉我们，网页上的任何操作都不会改动草稿。</p>
+
+    <h2>草稿列表</h2>
+    {drafts.length ? (
+      <div class="grid grid-3">
+        {drafts.map((d: any) => (
+          <a class="card point-card" href={u(`/teacher/drafts/${d.slug}/`)}>
+            <h3>{d.acupoint.displayName}</h3>
+            <div class="meta">{d.acupoint.meridian}</div>
+            <p><span class="badge badge-warn">{d.status}</span> {d.draftCopySets[0].variants.length} 组草稿 · 生成于 {d.generatedAt}</p>
+          </a>
+        ))}
+      </div>
+    ) : <p class="placeholder">目前没有待确认的草稿。</p>}
+    <p class="small muted">已有负责人原文的穴位（例如三阴交、足三里、阳陵泉）不会生成草稿，也不会在这里出现。</p>
+  </div>
+</Base>

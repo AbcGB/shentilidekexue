@@ -243,3 +243,9 @@ dl.info dd { margin: 0; }
 
 .eq-highlights { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px 10px 32px; }
 .eq-highlights li { margin: 4px 0; }
+
+/* 待确认草稿 */
+.draft-banner { border-left-color: #c0392b; background: #fdecea; color: #6b1d14; }
+.draft-card { border-style: dashed; }
+.draft-card .wb-head { background: #fbf3e4; }
+#jd-table th, #jd-table td { white-space: nowrap; }

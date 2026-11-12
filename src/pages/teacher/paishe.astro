@@ -1,0 +1,45 @@
+---
+import Base from '../../layouts/Base.astro';
+import ReviewBadge from '../../components/ReviewBadge.astro';
+import { u } from '../../lib/url';
+---
+<Base title="20—30 秒穴位定位视频拍摄建议（老师工作台）" path="/teacher/paishe/" noindex description="内部页面：穴位定位与皮门多普勒演示短视频的拍摄建议。">
+  <div class="container prose">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/teacher/')}>老师工作台</a> › 拍摄建议</div>
+    <h1>20—30 秒穴位定位视频拍摄建议</h1>
+    <p><ReviewBadge status="待审核" /> <span class="badge badge-gray">草稿，可在现场调整</span></p>
+    <p class="notice">这是给拍摄老师的操作建议，不是医学课程。内容待负责人和专业老师确认，现场可以按实际情况调整。</p>
+
+    <h2>一条视频拍什么（建议顺序）</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>时间</th><th>画面</th><th>字幕/口播</th></tr></thead>
+      <tbody>
+        <tr><td>0—3 秒</td><td>穴位所在部位全景</td><td>穴位名称、代码、所属经络（与工作台、知识库一致）</td></tr>
+        <tr><td>3—12 秒</td><td>体表标志与简便找法：先指出骨性标志或横纹，再量寸</td><td>按知识库里的“标准位置”和“简便找法”说，不自己改写定位描述</td></tr>
+        <tr><td>12—25 秒</td><td>皮门多普勒演示：涂耦合剂，探头在大致区域内慢慢移动，听提示音，做标记</td><td>“用皮门多普勒在这个区域探测血流信号，做定位标记”</td></tr>
+        <tr><td>25—30 秒</td><td>标记点特写</td><td>“定位演示，不构成诊疗建议”</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>拍摄小提示</h2>
+    <ul>
+      <li>竖屏拍摄，光线充足，探头和标记点要拍清楚；提示音要收进去，尽量减少环境噪声。</li>
+      <li>只拍需要定位的部位，不拍到被拍摄者的面部和其他隐私；拍摄前取得本人同意。</li>
+      <li>先按标准方法找到大致区域，再用设备演示，两步都要出现在画面里。</li>
+      <li>拍完后发到工作群，并告诉负责人是哪个穴位，方便在拍摄清单里登记。</li>
+    </ul>
+
+    <h2>可以说 / 不要说</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>可以说</th><th>不要说</th></tr></thead>
+      <tbody>
+        <tr><td>这是××穴的定位演示</td><td>治疗、治好、缓解、调理某种病，或任何效果承诺</td></tr>
+        <tr><td>用皮门多普勒在这个区域探测血流信号</td><td>“穴位就是皮穿支”“设备能百分之百精准找到穴位”</td></tr>
+        <tr><td>有研究在探索皮穿支与腧穴的关系</td><td>“已经被科学证明”</td></tr>
+        <tr><td>设备由丁志伟老师研发</td><td>设备价格、培训费用、报名方式（以负责人正式发布为准）</td></tr>
+        <tr><td>——</td><td>设备频率、探测深度等参数（还要和说明书核对）</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted">听到提示音不等于一定有皮穿支，原理见学习路径<a href={u('/xuexi/duopule-dingwei/')}>第 5 课</a>。标题、描述、关键词请到<a href={u('/teacher/')}>老师工作台</a>复制负责人确认过的文案。</p>
+  </div>
+</Base>

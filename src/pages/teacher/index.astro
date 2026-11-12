@@ -1,12 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
 import ReviewBadge from '../../components/ReviewBadge.astro';
-import { getWorkbenchAcupoints, getAcupointsOrdered, getLearning, latestDate } from '../../lib/data';
+import { getWorkbenchAcupoints, getAcupointsOrdered, getLearning, latestDate, getDrafts } from '../../lib/data';
 import { getSets } from '../../lib/copy-core.mjs';
 import { u } from '../../lib/url';
 const points = getWorkbenchAcupoints();
 const pending = getAcupointsOrdered().filter((p: any) => !points.includes(p));
 const wbSlugs = new Set(points.map((p: any) => p.slug));
+const draftSlugs = new Set(getDrafts().map((d: any) => d.slug));
 const latest = latestDate();
 const todays = getLearning().filter((e) => e.date === latest && e.type === '穴位视频');
 ---
@@ -53,7 +54,14 @@ const todays = getLearning().filter((e) => e.date === latest && e.type === '穴�
         </a>
       ))}
     </div>
-    {pending.length > 0 && <p class="small muted">以下穴位已有公开知识页，视频文案待负责人提供：{pending.map((p: any) => p.displayName).join('、')}。</p>}
+    {pending.length > 0 && <p class="small muted">以下穴位已有公开知识页，正式文案还没有确认：{pending.map((p: any) => draftSlugs.has(p.slug) ? `${p.displayName}（草稿待负责人确认）` : p.displayName).join('、')}。草稿不在这里使用。</p>}
+
+    <h2>拍摄与分工</h2>
+    <div class="grid grid-3">
+      <a class="card point-card" href={u('/teacher/jindu/')}><h3>全身经穴拍摄清单</h3><p>按经络查看每个穴位的文案状态，筛选还没有文案的穴位。</p></a>
+      <a class="card point-card" href={u('/teacher/paishe/')}><h3>20—30 秒视频拍摄建议</h3><p>一条定位视频拍什么、字幕可以说什么、不要说什么（草稿）。</p></a>
+      <a class="card point-card" href={u('/teacher/drafts/')}><h3>待负责人确认的草稿</h3><p>仅供负责人确认，老师请勿复制使用。</p></a>
+    </div>
 
   </div>
   <script>

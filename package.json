@@ -12,8 +12,10 @@
     "preview": "node api/node-server.mjs --static dist --port 4321",
     "preview:static": "astro preview --host --port 4321",
     "stats:init": "node scripts/stats-init.mjs",
-    "test": "node scripts/test-dist.mjs",
-    "test:stats": "node scripts/test-stats.mjs"
+    "test": "node scripts/test-dist.mjs && node scripts/test-drafts.mjs",
+    "test:stats": "node scripts/test-stats.mjs",
+    "test:drafts": "node scripts/test-drafts.mjs",
+    "draft:copy": "node scripts/draft-copy.mjs"
   },
   "dependencies": {
     "astro": "^7.4.11"

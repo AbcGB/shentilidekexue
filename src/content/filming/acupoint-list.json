@@ -1,0 +1,30 @@
+{
+  "_说明": "全身经穴拍摄清单（老师工作台内部使用，不生成公开页面）。名称、代码、所属经络依据 GB/T 12346-2021《经穴名称与定位》。只有核对过的穴位才写进 points；完整名单尚待对照标准原文核对后补充，不要凭记忆批量添加。每条可写 videoStatus（已拍摄/拍摄中），没有就显示“未记录”。",
+  "source": "GB/T 12346-2021《经穴名称与定位》",
+  "complete": false,
+  "completeNote": "完整的全身经穴名单尚未对照标准原文核对，当前只列出已核对的穴位。补充时请逐条对照标准原文。",
+  "meridians": [
+    { "code": "LU", "name": "手太阴肺经" },
+    { "code": "LI", "name": "手阳明大肠经" },
+    { "code": "ST", "name": "足阳明胃经" },
+    { "code": "SP", "name": "足太阴脾经" },
+    { "code": "HT", "name": "手少阴心经" },
+    { "code": "SI", "name": "手太阳小肠经" },
+    { "code": "BL", "name": "足太阳膀胱经" },
+    { "code": "KI", "name": "足少阴肾经" },
+    { "code": "PC", "name": "手厥阴心包经" },
+    { "code": "TE", "name": "手少阳三焦经" },
+    { "code": "GB", "name": "足少阳胆经" },
+    { "code": "LR", "name": "足厥阴肝经" },
+    { "code": "GV", "name": "督脉" },
+    { "code": "CV", "name": "任脉" }
+  ],
+  "points": [
+    { "name": "足三里", "code": "ST36", "meridian": "足阳明胃经", "slug": "zusanli" },
+    { "name": "三阴交", "code": "SP6", "meridian": "足太阴脾经", "slug": "sanyinjiao" },
+    { "name": "神门", "code": "HT7", "meridian": "手少阴心经", "slug": "shenmen" },
+    { "name": "后溪", "code": "SI3", "meridian": "手太阳小肠经", "slug": "houxi" },
+    { "name": "外关", "code": "TE5", "meridian": "手少阳三焦经", "slug": "waiguan" },
+    { "name": "阳陵泉", "code": "GB34", "meridian": "足少阳胆经", "slug": "yanglingquan" }
+  ]
+}
