@@ -1,0 +1,135 @@
+---
+// 管理员统计页。页面本身不含任何统计数据和口令；输入口令后由浏览器向统计接口请求数据，口令只在服务器端校验。
+import Base from '../../layouts/Base.astro';
+import { site, accountSettings, getAcupointsOrdered } from '../../lib/data';
+import { sortedAccounts } from '../../lib/copy-core.mjs';
+import { u } from '../../lib/url';
+const cfg = {
+  apiBase: site.stats?.apiBase || '/api',
+  accounts: Object.fromEntries(sortedAccounts(accountSettings).map((a: any) => [a.id, a.name])),
+  accountOrder: sortedAccounts(accountSettings).map((a: any) => a.id),
+  points: Object.fromEntries(getAcupointsOrdered().map((p: any) => [p.slug, p.displayName])),
+  pointOrder: getAcupointsOrdered().map((p: any) => p.slug),
+};
+---
+<Base title="复制统计（管理员）" path="/admin/stats/" noindex description="管理员统计页面。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 管理员 › 复制统计</div>
+    <h1>文案复制统计（管理员）</h1>
+    <p class="small muted">只统计内容被复制的次数，不记录是谁复制、不做个人排行。本页不会被搜索引擎收录。</p>
+
+    <form id="login" class="card" style="max-width:480px">
+      <label for="token"><strong>管理口令</strong></label>
+      <input id="token" type="password" autocomplete="current-password" required style="width:100%;height:44px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:1rem;margin:6px 0 10px" />
+      <label class="small"><input type="checkbox" id="remember" /> 在本次浏览器会话中记住（关闭浏览器后失效）</label>
+      <div style="margin-top:10px"><button class="btn" type="submit">查看统计</button></div>
+      <p id="login-msg" class="small" style="color:var(--warn)"></p>
+    </form>
+
+    <div id="dash" hidden>
+      <div class="wb-top">
+        <div class="small muted" id="dash-meta"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" id="reload">刷新</button><button class="btn btn-outline btn-sm" id="logout">退出</button></div>
+      </div>
+      <form class="filters" id="f" onsubmit="return false">
+        <label>穴位<select name="point"><option value="">全部穴位</option></select></label>
+        <label>账号<select name="account"><option value="">全部账号</option></select></label>
+        <label>内容类型<select name="type"><option value="">全部类型</option><option value="title">标题</option><option value="description">描述</option><option value="keywords">关键词</option><option value="hashtags">话题标签</option><option value="account_bundle">单账号整组</option><option value="all_bundle">全部六组</option></select></label>
+        <label>版本<select name="active"><option value="1">仅当前版本</option><option value="">含历史版本</option></select></label>
+      </form>
+      <div id="out"></div>
+    </div>
+  </div>
+  <script type="application/json" id="admin-config" set:html={JSON.stringify(cfg)} />
+  <script>
+    const cfg = JSON.parse(document.getElementById('admin-config')!.textContent!);
+    const T: Record<string, string> = { title: '标题', description: '描述', keywords: '关键词', hashtags: '话题标签', account_bundle: '单账号整组', all_bundle: '全部六组' };
+    const api = (p: string) => cfg.apiBase.replace(/\/$/, '') + p;
+    const $ = (s: string) => document.querySelector(s) as HTMLElement;
+    const esc = (s: any) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+    let token = sessionStorage.getItem('stl_admin') || '';
+    let data: any = null;
+
+    const fsel = $('#f') as HTMLFormElement;
+    for (const s of cfg.pointOrder) (fsel.point as HTMLSelectElement).add(new Option(cfg.points[s], s));
+    for (const a of cfg.accountOrder) (fsel.account as HTMLSelectElement).add(new Option(cfg.accounts[a], a));
+
+    async function load() {
+      const res = await fetch(api('/admin/stats'), { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }).catch(() => null);
+      if (!res) { $('#login-msg').textContent = '无法连接统计服务。'; return false; }
+      if (res.status === 401) { $('#login-msg').textContent = '口令不正确。'; return false; }
+      if (res.status === 503) { $('#login-msg').textContent = '服务器尚未设置管理口令（STATS_ADMIN_TOKEN），请按 README 配置。'; return false; }
+      if (res.status === 429) { $('#login-msg').textContent = '尝试次数过多，请 1 分钟后再试。'; return false; }
+      if (!res.ok) { $('#login-msg').textContent = '统计服务出错，请稍后再试。'; return false; }
+      data = await res.json();
+      $('#login').hidden = true; $('#dash').hidden = false;
+      render();
+      return true;
+    }
+    $('#login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      token = ($('#token') as HTMLInputElement).value.trim();
+      if (await load()) { if (($('#remember') as HTMLInputElement).checked) sessionStorage.setItem('stl_admin', token); }
+    });
+    $('#reload').addEventListener('click', load);
+    $('#logout').addEventListener('click', () => { sessionStorage.removeItem('stl_admin'); token = ''; data = null; $('#dash').hidden = true; $('#login').hidden = false; $('#out').innerHTML = ''; });
+    fsel.addEventListener('change', render);
+    if (token) load();
+
+    const name = (it: any) => `${cfg.points[it.acupoint] || it.acupoint} · ${it.account_id === '_all' ? '全部账号' : (cfg.accounts[it.account_id] || it.account_id)} · ${T[it.content_type] || it.content_type}${it.variant !== 'a' ? ' ' + it.variant.toUpperCase() : ''} v${it.version}${it.active ? '' : '（历史版本）'}${it.edited ? '（有小修改）' : ''}`;
+    function table(rows: any[], cols: [string, (r: any) => any][]) {
+      if (!rows.length) return '<p class="muted small">暂无数据</p>';
+      return `<div class="table-wrap"><table><thead><tr>${cols.map((c) => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td>${c[1](r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+    const itemCols: [string, (r: any) => any][] = [['内容', (r) => `<div class="small muted">${esc(name(r))}</div>${esc(r.preview)}`], ['累计', (r) => r.t], ['近7天', (r) => r.d7], ['近30天', (r) => r.d30], ['最后复制', (r) => r.last ? esc(new Date(r.last).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })) : '—']];
+    function sum(list: any[], k: string) { return list.reduce((n, x) => n + (Number(x[k]) || 0), 0); }
+
+    function render() {
+      if (!data) return;
+      const f = new FormData(fsel); const v = (k: string) => String(f.get(k) || '');
+      let items = data.items.filter((i: any) => (!v('active') || i.active) && (!v('point') || i.acupoint === v('point')) && (!v('account') || i.account_id === v('account')) && (!v('type') || i.content_type === v('type')));
+      const singles = items.filter((i: any) => ['title', 'description', 'keywords', 'hashtags'].includes(i.content_type));
+      $('#dash-meta').textContent = `统计日期（北京时间）：${data.today} · 当前筛选共 ${items.length} 条内容`;
+      let html = '';
+      // 全部穴位
+      html += '<h2>全部穴位累计复制情况</h2>';
+      html += table(cfg.pointOrder.filter((s: string) => !v('point') || s === v('point')).map((s: string) => {
+        const its = singles.filter((i: any) => i.acupoint === s);
+        const acc = items.filter((i: any) => i.acupoint === s && i.content_type === 'account_bundle');
+        const all = items.filter((i: any) => i.acupoint === s && i.content_type === 'all_bundle');
+        return { s, t: sum(its, 't'), d7: sum(its, 'd7'), d30: sum(its, 'd30'), acc: sum(acc, 't'), all: sum(all, 't') };
+      }), [['穴位', (r) => esc(cfg.points[r.s])], ['单条复制累计', (r) => r.t], ['近7天', (r) => r.d7], ['近30天', (r) => r.d30], ['单账号整组', (r) => r.acc], ['全部六组（整批）', (r) => r.all]]);
+      html += '<p class="small muted">“单条复制累计”包含单条复制，以及单账号整组复制时各单条的计数；“全部六组”只单独记整批次数，不计入单条。</p>';
+      // 六账号
+      html += '<h2>六个账号的内容复制情况</h2>';
+      html += table(cfg.accountOrder.filter((a: string) => !v('account') || a === v('account')).map((a: string) => {
+        const its = singles.filter((i: any) => i.account_id === a);
+        const by = (t: string) => sum(its.filter((i: any) => i.content_type === t), 't');
+        return { a, title: by('title'), description: by('description'), keywords: by('keywords'), hashtags: by('hashtags'), bundle: sum(items.filter((i: any) => i.account_id === a && i.content_type === 'account_bundle'), 't'), d7: sum(its, 'd7') };
+      }), [['账号', (r) => esc(cfg.accounts[r.a])], ['标题', (r) => r.title], ['描述', (r) => r.description], ['关键词', (r) => r.keywords], ['话题标签', (r) => r.hashtags], ['整组', (r) => r.bundle], ['单条近7天', (r) => r.d7]]);
+      // 排行
+      for (const t of ['title', 'description', 'keywords']) {
+        if (v('type') && v('type') !== t) continue;
+        const list = items.filter((i: any) => i.content_type === t).sort((a: any, b: any) => b.t - a.t || b.d7 - a.d7).slice(0, 10);
+        html += `<h2>${T[t]}复制排行（前 10）</h2>` + table(list, itemCols);
+      }
+      const hot = singles.filter((i: any) => i.active).sort((a: any, b: any) => b.d7 - a.d7 || b.t - a.t).slice(0, 10).filter((i: any) => i.d7 > 0);
+      html += '<h2>最近7天热门内容</h2>' + table(hot, itemCols);
+      const cold = singles.filter((i: any) => i.active).sort((a: any, b: any) => a.d7 - b.d7 || a.t - b.t).slice(0, 10);
+      html += '<h2>最近7天较少使用的内容</h2>' + table(cold, itemCols);
+      // 趋势
+      html += '<h2>最近30天复制趋势</h2>';
+      const days: string[] = [];
+      const base = new Date(data.today + 'T00:00:00Z').getTime();
+      for (let i = 29; i >= 0; i--) days.push(new Date(base - i * 86400_000).toISOString().slice(0, 10));
+      const typeFilter = v('type');
+      const per: Record<string, number> = {};
+      for (const d of data.daily) if (!typeFilter || d.type === typeFilter) per[d.day] = (per[d.day] || 0) + Number(d.n);
+      const max = Math.max(1, ...days.map((d) => per[d] || 0));
+      html += `<div class="trend">${days.map((d) => `<div class="bar" title="${d}：${per[d] || 0} 次"><span style="height:${Math.round(((per[d] || 0) / max) * 100)}%"></span><em>${d.slice(8)}</em></div>`).join('')}</div>`;
+      html += '<p class="small muted">按天汇总全部复制操作（含单条、整组成员和整批），可用上方“内容类型”筛选；不受穴位/账号筛选影响。</p>';
+      html += '<h2>全部明细</h2>' + table(items.slice().sort((a: any, b: any) => cfg.pointOrder.indexOf(a.acupoint) - cfg.pointOrder.indexOf(b.acupoint) || a.id.localeCompare(b.id)), itemCols);
+      $('#out').innerHTML = html;
+    }
+  </script>
+</Base>

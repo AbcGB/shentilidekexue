@@ -6,10 +6,14 @@
   "description": "身体里的科学 官方网站及新媒体内容工作台（静态站点）",
   "scripts": {
     "dev": "astro dev --host",
+    "api": "node api/node-server.mjs --port 8787",
     "check:content": "node scripts/check-content.mjs",
-    "build": "node scripts/check-content.mjs && astro build",
-    "preview": "astro preview --host --port 4321",
-    "test": "node scripts/test-dist.mjs"
+    "build": "node scripts/check-content.mjs && node scripts/build-copy-manifest.mjs && astro build",
+    "preview": "node api/node-server.mjs --static dist --port 4321",
+    "preview:static": "astro preview --host --port 4321",
+    "stats:init": "node scripts/stats-init.mjs",
+    "test": "node scripts/test-dist.mjs",
+    "test:stats": "node scripts/test-stats.mjs"
   },
   "dependencies": {
     "astro": "^7.4.11"

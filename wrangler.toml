@@ -1,0 +1,20 @@
+# Cloudflare Workers + D1 部署配置（可选方案）。
+# 使用前：1) npx wrangler d1 create shentilidekexue-stats，把输出的 database_id 填到下面；
+#         2) npx wrangler d1 execute shentilidekexue-stats --remote --file=api/schema.sql
+#         3) npm run build 后：npx wrangler d1 execute shentilidekexue-stats --remote --file=api/generated/seed.sql
+#         4) npx wrangler secret put STATS_ADMIN_TOKEN   （输入管理口令，不要写在本文件里）
+#            npx wrangler secret put STATS_SALT
+#         5) npx wrangler deploy
+# 网站与接口同域名时，在 Cloudflare 把 “你的域名/api/*” 路由到此 Worker；不同域名时设置 ALLOWED_ORIGINS。
+name = "shentilidekexue-stats"
+main = "api/worker.mjs"
+compatibility_date = "2026-11-01"
+
+[vars]
+RATE_LIMIT_PER_MIN = "120"
+ALLOWED_ORIGINS = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shentilidekexue-stats"
+database_id = "请替换为 wrangler d1 create 输出的 database_id"

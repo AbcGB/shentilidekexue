@@ -5,3 +5,9 @@ dist/
 *.log
 .env
 .env.*
+# 复制统计：本地数据库、口令配置、自动生成的清单
+data/
+.stats.env
+.dev.vars
+api/generated/
+.wrangler/

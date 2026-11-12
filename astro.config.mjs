@@ -13,4 +13,6 @@ export default defineConfig({
   trailingSlash: 'always',
   build: { format: 'directory' },
   output: 'static',
+  // 开发模式（npm run dev）时，把 /api 请求转给本地统计服务（npm run api，端口 8787）
+  vite: { server: { proxy: { '/api': 'http://localhost:8787' } } },
 });

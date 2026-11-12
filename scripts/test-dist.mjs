@@ -1,4 +1,5 @@
 // 验收测试脚本：先运行 npm run build，并启动 npm run preview，然后运行 npm test。
+// 默认自动用临时数据库启动独立测试服务（端口 4399），也可用 TEST_URL 指定已运行的网站。
 // 1) 静态检查 dist（SEO、noindex、站点地图、核心内容可抓取、文案数据对齐）
 // 2) 浏览器检查（搜索、复制、手动复制备用方式、手机布局），需要本机安装 Chrome。
 import fs from 'node:fs';
@@ -8,7 +9,10 @@ import { buildCopyMap, alignCopies, keywordsText, hashtagsText } from '../src/li
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
-const BASE = process.env.TEST_URL || 'http://localhost:4321';
+import { startServer } from './test-server.mjs';
+let server = null;
+if (!process.env.TEST_URL) server = await startServer({ port: 4399, env: { RATE_LIMIT_PER_MIN: '100000' } });
+const BASE = process.env.TEST_URL || server.url;
 const settings = JSON.parse(fs.readFileSync(path.join(root, 'src/content/accounts/account-settings.json'), 'utf8'));
 const points = fs.readdirSync(path.join(root, 'src/content/acupoints')).map((f) => JSON.parse(fs.readFileSync(path.join(root, 'src/content/acupoints', f), 'utf8')));
 let pass = 0, fail = 0;
@@ -18,7 +22,7 @@ const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&qu
 const meta = (html, re) => { const m = html.match(re); return m ? decode(m[1]) : null; };
 
 console.log('A. 页面是否全部生成');
-const pages = ['index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
+const pages = ['admin/stats/index.html', 'index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
 const slugs = ['zusanli', 'yanglingquan', 'sanyinjiao', 'waiguan', 'houxi', 'shenmen'];
 for (const s of slugs) pages.push(`xuewei/${s}/index.html`, `teacher/${s}/index.html`);
 for (const p of pages) ok(fs.existsSync(path.join(dist, p)), `缺少页面 ${p}`);
@@ -46,12 +50,13 @@ for (const s of slugs) {
   for (const img of html.match(/<img [^>]*>/g) || []) ok(/alt="[^"]+"/.test(img), `${s} 图片缺少 alt: ${img}`);
   ok((html.match(/href="\/xuewei\/[a-z]+\/"/g) || []).length >= 3, `${s} 内部链接过少`);
 }
-for (const s of ['teacher/index.html', ...slugs.map((s) => `teacher/${s}/index.html`)]) {
+for (const s of ['admin/stats/index.html', 'teacher/index.html', ...slugs.map((s) => `teacher/${s}/index.html`)]) {
   ok(read(s).includes('<meta name="robots" content="noindex, nofollow">'), `${s} 未设置 noindex`);
 }
 const sitemap = read('sitemap.xml');
 for (const s of slugs) ok(sitemap.includes(`/xuewei/${s}/</loc>`), `sitemap 缺少 ${s}`);
 ok(!sitemap.includes('/teacher/'), 'sitemap 不应包含老师工作台');
+ok(!sitemap.includes('/admin/'), 'sitemap 不应包含管理页');
 const locs = sitemap.match(/<loc>[^<]+<\/loc>/g) || [];
 ok(new Set(locs).size === locs.length, 'sitemap 有重复网址');
 ok(/Sitemap: https?:\/\/.+\/sitemap\.xml/.test(read('robots.txt')), 'robots.txt 缺少 Sitemap');
@@ -179,5 +184,6 @@ if (chromium && chromePath) {
   await browser.close();
 } else if (chromium) console.warn('  未找到 Chrome，跳过浏览器测试');
 
+server?.stop();
 console.log(`\n结果：通过 ${pass} 项，失败 ${fail} 项`);
 process.exit(fail ? 1 : 0);

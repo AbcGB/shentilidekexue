@@ -3,7 +3,8 @@ import Base from '../../layouts/Base.astro';
 import CopyRuntime from '../../components/CopyRuntime.astro';
 import ReviewBadge from '../../components/ReviewBadge.astro';
 import { getAcupoints, accountSettings } from '../../lib/data';
-import { alignCopies, buildCopyMap, keywordsText, hashtagsText } from '../../lib/copy-core.mjs';
+import { alignCopies, buildCopyMap, keywordsText, hashtagsText, buildCopyItems } from '../../lib/copy-core.mjs';
+import { site } from '../../lib/data';
 import { u } from '../../lib/url';
 
 export function getStaticPaths() {
@@ -13,6 +14,10 @@ const { p } = Astro.props as any;
 const rows = alignCopies(p, accountSettings);
 const map = buildCopyMap(p, accountSettings);
 const art = p.wechatArticle || { status: '待制作' };
+const items = buildCopyItems(p, accountSettings);
+const idByKey = Object.fromEntries(items.map((it: any) => [it.copyKey, it.id]));
+const statsCfg = { enabled: site.stats?.enabled !== false, apiBase: site.stats?.apiBase || '/api', acupoint: p.slug };
+const sortable = ['title', 'description', 'keywords'];
 const groups = [
   { key: 'title', h: '一、六个视频标题', btn: '复制标题', text: (c: any) => c.title },
   { key: 'description', h: '二、六个视频描述', btn: '复制描述', text: (c: any) => c.description },
@@ -26,25 +31,53 @@ const times = (a: any) => (a.publishTimes?.length ? a.publishTimes.join(' / ') :
     <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/teacher/')}>老师工作台</a> › {p.displayName}</div>
     <h1>{p.displayName} · 六账号发布内容</h1>
     <p class="muted small">{p.meridian} · 文案更新：{p.updateDate} · 穴位资料：<a href={u(`/xuewei/${p.slug}/`)}>查看公开页面</a></p>
+    <p class="small muted" id="stats-status">复制次数为全站老师共享的匿名统计（不记录是谁复制），正在读取统计…</p>
     <p class="notice"><strong>{p.copyStatus || '请人工确认后再发布'}。</strong>以下文案为 AI 辅助起草，发布前请负责人或专业老师确认；穴位知识状态：<ReviewBadge status={p.reviewStatus} />。</p>
 
     <div class="wb-top">
       <div><strong>一键复制六个账号的全部内容</strong><div class="small muted">方便直接发到工作群</div></div>
-      <button class="btn btn-lg" type="button" data-copy-key="all">复制全部六组内容</button>
+      <div class="wb-side">
+        <button class="btn btn-lg" type="button" data-copy-key="all" data-item-id={idByKey['all']}>复制全部六组内容</button>
+        <div class="wb-stat" data-stat-for={idByKey['all']}>整批复制 累计 <b data-t>–</b> 次 · 近7天 <b data-d7>–</b> 次</div>
+      </div>
     </div>
 
     {groups.map((g) => (
       <section class="wb-group" data-group={g.key}>
-        <h2>{g.h}</h2>
-        {rows.map(({ account, copy }, i) => (
-          <div class="wb-row" data-account={account.id}>
+        <div class="wb-head">
+          <h2>{g.h}</h2>
+          {sortable.includes(g.key) && (
+            <div class="wb-sort">
+              <label class="sr-only" for={`sort-${g.key}`}>排序方式</label>
+              <select id={`sort-${g.key}`} data-sort-select={g.key}>
+                <option value="default">默认顺序（账号 1—6）</option>
+                <option value="t-asc">累计复制：少 → 多</option>
+                <option value="t-desc">累计复制：多 → 少</option>
+                <option value="d7-asc">近7天：少 → 多</option>
+                <option value="d7-desc">近7天：多 → 少</option>
+              </select>
+              <button type="button" class="btn btn-outline btn-sm" data-sort-reset={g.key}>恢复默认</button>
+            </div>
+          )}
+        </div>
+        <div class="wb-rows" data-rows={g.key}>
+        {rows.map(({ account, copy }, i) => {
+          const itemId = idByKey[`${g.key}:${account.id}`];
+          return (
+          <div class="wb-row" data-account={account.id} data-index={i} data-item-id={itemId}>
             <div>
               <div class="wb-acc"><span class="num">{i + 1}</span>{account.name}</div>
               <div class="wb-text" data-field={g.key}>{copy ? (g.text(copy) || '（无）') : '（缺少文案）'}</div>
             </div>
-            {copy && <button class="btn btn-outline" type="button" data-copy-key={`${g.key}:${account.id}`}>{g.btn}</button>}
+            {copy && itemId && (
+              <div class="wb-side">
+                <button class="btn btn-outline" type="button" data-copy-key={`${g.key}:${account.id}`} data-item-id={itemId}>{g.btn}</button>
+                <div class="wb-stat" data-stat-for={itemId}>累计 <b data-t>–</b> 次<br />近7天 <b data-d7>–</b> 次</div>
+              </div>
+            )}
           </div>
-        ))}
+        );})}
+        </div>
       </section>
     ))}
 
@@ -56,7 +89,12 @@ const times = (a: any) => (a.publishTimes?.length ? a.publishTimes.join(' / ') :
             <div class="wb-acc"><span class="num">{i + 1}</span>{account.name}</div>
             <div class="small wb-times">平台：{account.platform} · 建议发布时间：{times(account)}</div>
           </div>
-          {copy && <button class="btn" type="button" data-copy-key={`account:${account.id}`}>复制该账号全部发布内容</button>}
+          {copy && (
+            <div class="wb-side">
+              <button class="btn" type="button" data-copy-key={`account:${account.id}`} data-item-id={idByKey[`account:${account.id}`]}>复制该账号全部发布内容</button>
+              <div class="wb-stat" data-stat-for={idByKey[`account:${account.id}`]}>整组 累计 <b data-t>–</b> 次 · 近7天 <b data-d7>–</b> 次</div>
+            </div>
+          )}
         </div>
       ))}
     </section>
@@ -81,7 +119,9 @@ const times = (a: any) => (a.publishTimes?.length ? a.publishTimes.join(' / ') :
       )}
     </section>
 
-    <p class="small muted">提示：如果按钮无法复制，会弹出文字框，请手动全选复制。也可以直接长按上面的文字进行选择。</p>
+    <p class="small muted">提示：如果按钮无法复制，会弹出文字框，请手动全选复制（手动复制无法确认是否成功，因此不计入次数）。也可以直接长按上面的文字进行选择。</p>
+    <p class="small muted">统计规则：单条复制只增加该条次数；“复制该账号全部发布内容”增加该账号整组次数，同时该账号的标题、描述、关键词、话题标签各加一次；“复制全部六组内容”只记一次整批复制，不计入各单条。同一浏览器 10 秒内重复复制同一内容只计一次。</p>
+    <script type="application/json" id="stats-config" set:html={JSON.stringify(statsCfg)} />
     <script type="application/json" id="copy-data" set:html={JSON.stringify(map).replace(/</g, '\\u003c')} />
   </div>
   <CopyRuntime />

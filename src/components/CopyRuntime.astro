@@ -1,12 +1,14 @@
 ---
-// 复制功能：先用浏览器剪贴板接口，失败时用兼容方式，再失败则弹出手动复制框。
+// 复制功能 + 复制次数统计。
+// 流程：① 浏览器复制 → ② 确认成功 → ③ 向统计接口发送（带唯一事件编号，可安全重试）→ ④ 更新数字 → ⑤ 提示。
+// 复制失败不计数；网络失败时文字照样复制，提示“文案已复制，统计暂未同步。”，稍后自动重试（事件编号相同，后台不会重复计数）。
 // 复制的文字来自页面中 id="copy-data" 的数据（与页面显示的文字同源）。
 ---
 <div class="toast" role="status" aria-live="polite">复制成功！</div>
 <div class="manual-dialog" role="dialog" aria-modal="true" aria-labelledby="manual-title">
   <div class="panel">
     <h3 id="manual-title" style="margin-top:0">请手动复制</h3>
-    <p class="small muted">当前浏览器不允许自动复制。文字已全部选中：电脑请按 Ctrl+C（苹果电脑按 ⌘+C）；手机请长按文字，选择“全选”后再点“复制”。</p>
+    <p class="small muted">当前浏览器不允许自动复制。文字已全部选中：电脑请按 Ctrl+C（苹果电脑按 ⌘+C）；手机请长按文字，选择“全选”后再点“复制”。（手动复制无法确认是否成功，不计入复制次数。）</p>
     <textarea readonly></textarea>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
       <button type="button" class="btn btn-outline" data-manual-select>重新全选</button>
@@ -15,16 +17,23 @@
   </div>
 </div>
 <script>
+  type Stat = { t: number; d7: number; d30?: number; last?: string | null };
+  const w = window as any;
   const dataEl = document.getElementById('copy-data');
   const map: Record<string, string> = dataEl ? JSON.parse(dataEl.textContent || '{}') : {};
+  const cfgEl = document.getElementById('stats-config');
+  const cfg: { enabled: boolean; apiBase: string; acupoint: string } | null = cfgEl ? JSON.parse(cfgEl.textContent || 'null') : null;
+  const statsOn = !!(cfg && cfg.enabled);
+  const api = (p: string) => (cfg?.apiBase || '/api').replace(/\/$/, '') + p;
   const toast = document.querySelector<HTMLElement>('.toast')!;
   const dialog = document.querySelector<HTMLElement>('.manual-dialog')!;
   const ta = dialog.querySelector('textarea')!;
+  const statusEl = document.getElementById('stats-status');
   let timer: any;
 
-  function showToast(msg = '复制成功！') {
-    toast.textContent = msg; toast.classList.add('show');
-    clearTimeout(timer); timer = setTimeout(() => toast.classList.remove('show'), 1600);
+  function showToast(msg = '复制成功！', warn = false) {
+    toast.textContent = msg; toast.classList.toggle('warn', warn); toast.classList.add('show');
+    clearTimeout(timer); timer = setTimeout(() => toast.classList.remove('show'), warn ? 3000 : 1800);
   }
   function legacyCopy(text: string): boolean {
     const t = document.createElement('textarea');
@@ -38,7 +47,7 @@
     return ok;
   }
   async function copyText(text: string): Promise<boolean> {
-    if ((window as any).__forceManualCopy) return false; // 测试用
+    if (w.__forceManualCopy) return false; // 测试用：模拟浏览器禁止复制
     try {
       if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; }
     } catch { /* 改用兼容方式 */ }
@@ -52,20 +61,157 @@
   dialog.querySelector('[data-manual-select]')!.addEventListener('click', () => { ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length); });
   dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.classList.remove('open'); });
 
+  // ───── 统计 ─────
+  function randomId(): string {
+    const a = new Uint8Array(16);
+    crypto.getRandomValues(a);
+    return Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  function store(key: string, val?: any) {
+    try {
+      if (val === undefined) return JSON.parse(localStorage.getItem(key) || 'null');
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch { return null; }
+  }
+  // 匿名浏览器编号：只用于“10 秒内重复复制不重复计数”，后台只保存加盐哈希，且 1 天内删除；与老师身份无关
+  let client: string = store('stl_client') || '';
+  if (!client) { client = randomId(); store('stl_client', client); }
+
+  function applyStats(stats: Record<string, Stat>) {
+    for (const [id, s] of Object.entries(stats)) {
+      document.querySelectorAll<HTMLElement>(`[data-stat-for="${CSS.escape(id)}"]`).forEach((el) => {
+        el.querySelector('[data-t]')!.textContent = String(s.t);
+        el.querySelector('[data-d7]')!.textContent = String(s.d7);
+        el.classList.add('ready');
+      });
+      document.querySelectorAll<HTMLElement>(`.wb-row[data-item-id="${CSS.escape(id)}"]`).forEach((row) => {
+        row.dataset.t = String(s.t); row.dataset.d7 = String(s.d7);
+      });
+    }
+  }
+  function setStatus(text: string, bad = false) {
+    if (!statusEl) return;
+    statusEl.textContent = text; statusEl.classList.toggle('bad', bad);
+  }
+  async function fetchJson(url: string, init?: RequestInit, ms = 6000) {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), ms);
+    try {
+      const res = await fetch(url, { ...init, signal: ctl.signal, cache: 'no-store' });
+      const body = await res.json().catch(() => null);
+      return { status: res.status, body };
+    } finally { clearTimeout(t); }
+  }
+  let statsLoaded = false;
+  async function loadStats() {
+    if (!statsOn) { setStatus('复制统计未开启。'); return; }
+    try {
+      const { status, body } = await fetchJson(api(`/stats?acupoint=${encodeURIComponent(cfg!.acupoint)}`));
+      if (status !== 200 || !body?.ok) throw new Error(String(status));
+      applyStats(body.stats || {});
+      statsLoaded = true;
+      document.querySelectorAll<HTMLSelectElement>('[data-sort-select]').forEach((s) => (s.disabled = false));
+      setStatus('复制次数为全站老师共享的匿名统计（不记录是谁复制），可用来挑选使用较少的版本。');
+    } catch {
+      document.querySelectorAll('.wb-stat').forEach((el) => el.classList.add('na'));
+      document.querySelectorAll<HTMLSelectElement>('[data-sort-select]').forEach((s) => (s.disabled = true));
+      setStatus('统计暂时无法读取（网络或统计服务不可用）。复制功能不受影响。', true);
+    }
+  }
+
+  type Pending = { event_id: string; item_id: string; client: string; at: number };
+  const PKEY = 'stl_pending_events';
+  const getPending = (): Pending[] => (store(PKEY) || []).filter((p: Pending) => Date.now() - p.at < 7 * 86400_000);
+  const setPending = (list: Pending[]) => store(PKEY, list.slice(-50));
+
+  /** 发送一次复制事件。返回 'ok' | 'deduped' | 'retry'（需稍后重试）| 'drop'（内容已失效，不再重试） */
+  async function send(ev: Pending): Promise<'ok' | 'deduped' | 'retry' | 'drop'> {
+    try {
+      const { status, body } = await fetchJson(api('/copy'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ev) });
+      if (status === 200 && body?.ok) {
+        applyStats(body.stats || {});
+        return body.status === 'deduped' ? 'deduped' : 'ok';
+      }
+      if (status === 400 || status === 404) return 'drop';
+      return 'retry'; // 429 限流、500 数据库失败等
+    } catch { return 'retry'; }
+  }
+  let flushing = false;
+  async function flushPending() {
+    if (!statsOn || flushing) return;
+    flushing = true;
+    try {
+      for (const ev of getPending()) {
+        const r = await send(ev);
+        if (r === 'retry') break;
+        setPending(getPending().filter((p) => p.event_id !== ev.event_id));
+      }
+    } finally { flushing = false; }
+  }
+  w.__flushPendingCopyEvents = flushPending;
+
+  const lastSent: Record<string, number> = {};
+  const DEBOUNCE_MS = 2000;
+
   document.addEventListener('click', async (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-copy-key]');
     if (!btn) return;
+    if (btn.dataset.busy) return; // 上一次还在处理，忽略连续点击
     const key = btn.dataset.copyKey!;
     const text = map[key];
-    if (text === undefined) { showToast('没有找到要复制的内容'); return; }
-    const ok = await copyText(text);
-    (window as any).__lastCopied = { key, text, ok };
-    if (ok) {
-      showToast('复制成功！');
+    if (text === undefined) { showToast('没有找到要复制的内容', true); return; }
+    btn.dataset.busy = '1';
+    try {
+      const ok = await copyText(text);
+      w.__lastCopied = { key, text, ok };
+      if (!ok) { openManual(text); return; } // 复制失败：不计数
+      const itemId = btn.dataset.itemId;
+      let msg = '复制成功！'; let warn = false;
+      if (statsOn && itemId) {
+        const now = Date.now();
+        if (lastSent[itemId] && now - lastSent[itemId] < DEBOUNCE_MS) {
+          msg = '复制成功！（连续点击不重复计数）';
+        } else {
+          lastSent[itemId] = now;
+          const ev: Pending = { event_id: randomId(), item_id: itemId, client, at: now };
+          const r = await send(ev);
+          if (r === 'retry') { setPending([...getPending(), ev]); msg = '文案已复制，统计暂未同步。'; warn = true; }
+          else if (r === 'drop') { msg = '文案已复制，统计暂未同步。'; warn = true; }
+          else if (r === 'deduped') msg = '复制成功！（短时间内重复复制不重复计数）';
+          w.__lastStat = r;
+        }
+      }
+      showToast(msg, warn);
       const old = btn.textContent; btn.textContent = '✓ 已复制'; btn.setAttribute('data-copied', '1');
       setTimeout(() => { btn.textContent = old; btn.removeAttribute('data-copied'); }, 1500);
-    } else {
-      openManual(text);
-    }
+    } finally { delete btn.dataset.busy; }
   });
+
+  // ───── 排序（只改变显示顺序；每行的文字、按钮、内容编号是一个整体，不会错位） ─────
+  function sortGroup(group: string, mode: string) {
+    const box = document.querySelector<HTMLElement>(`[data-rows="${group}"]`);
+    if (!box) return;
+    const rows = Array.from(box.querySelectorAll<HTMLElement>(':scope > .wb-row'));
+    const [field, dir] = mode === 'default' ? ['index', 'asc'] : mode.split('-');
+    const val = (r: HTMLElement) => Number(field === 'index' ? r.dataset.index : r.dataset[field] ?? 0);
+    rows.sort((a, b) => (dir === 'asc' ? val(a) - val(b) : val(b) - val(a)) || Number(a.dataset.index) - Number(b.dataset.index));
+    rows.forEach((r) => box.appendChild(r));
+  }
+  document.querySelectorAll<HTMLSelectElement>('[data-sort-select]').forEach((sel) => {
+    sel.disabled = true;
+    sel.addEventListener('change', () => sortGroup(sel.dataset.sortSelect!, sel.value));
+  });
+  document.querySelectorAll<HTMLElement>('[data-sort-reset]').forEach((b) => b.addEventListener('click', () => {
+    const g = b.dataset.sortReset!;
+    const sel = document.querySelector<HTMLSelectElement>(`[data-sort-select="${g}"]`);
+    if (sel) sel.value = 'default';
+    sortGroup(g, 'default');
+  }));
+
+  if (statsOn) {
+    loadStats().then(flushPending);
+    window.addEventListener('online', flushPending);
+    setInterval(() => { if (getPending().length) flushPending(); }, 30_000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && statsLoaded) loadStats(); });
+  }
 </script>

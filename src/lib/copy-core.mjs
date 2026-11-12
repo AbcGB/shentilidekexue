@@ -91,3 +91,48 @@ export function pinyinForms(pinyin) {
   const parts = String(pinyin || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
   return { full: parts.join(''), initials: parts.map((p) => p[0]).join(''), spaced: parts.join(' ') };
 }
+
+// ───────────── 复制统计：内容编号（content_item_id） ─────────────
+// 编号格式：穴位:账号:类型:版本标记:v版本号，例如 zusanli:douyin:title:a:v1
+// - 类型：title 标题 / description 描述 / keywords 关键词 / hashtags 话题标签 /
+//         account_bundle 单账号整组 / all_bundle 全部六组
+// - 版本标记 variant：同一账号以后可有多个备用版本（a、b、c……），各自独立统计
+// - 版本号 version：文案“小修改”时不变（沿用统计）；改成“新内容版本”时把版本号 +1（重新从 0 计数）
+export const COPY_TYPES = ['title', 'description', 'keywords', 'hashtags'];
+export const TYPE_LABELS = { title: '标题', description: '描述', keywords: '关键词', hashtags: '话题标签', account_bundle: '单账号整组', all_bundle: '全部六组' };
+
+export function contentItemId(slug, accountId, type, variant = 'a', version = 1) {
+  return `${slug}:${accountId}:${type}:${variant}:v${version}`;
+}
+
+/** 简单稳定的文本指纹（FNV-1a），用于判断文案是否被修改过 */
+export function textHash(s) {
+  let h = 0x811c9dc5;
+  const str = String(s ?? '');
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16).padStart(8, '0');
+}
+
+/** 某个穴位全部可统计的内容条目（单条 + 单账号整组 + 全部六组） */
+export function buildCopyItems(acupoint, settings) {
+  const slug = acupoint.slug;
+  const items = [];
+  const map = buildCopyMap(acupoint, settings);
+  for (const { account, copy } of alignCopies(acupoint, settings)) {
+    if (!copy) continue;
+    const variant = copy.variant || 'a';
+    const v = copy.versions || {};
+    const memberIds = [];
+    for (const type of COPY_TYPES) {
+      const text = map[`${type}:${account.id}`] || '';
+      if (type === 'hashtags' && !text) continue;
+      const id = contentItemId(slug, account.id, type, variant, v[type] || 1);
+      memberIds.push(id);
+      items.push({ id, acupoint: slug, accountId: account.id, type, variant, version: v[type] || 1, hash: textHash(text), preview: text.slice(0, 80), copyKey: `${type}:${account.id}` });
+    }
+    const bundleText = map[`account:${account.id}`];
+    items.push({ id: contentItemId(slug, account.id, 'account_bundle', variant, v.bundle || 1), acupoint: slug, accountId: account.id, type: 'account_bundle', variant, version: v.bundle || 1, hash: textHash(bundleText), preview: `${account.name}：整组内容`, copyKey: `account:${account.id}`, members: memberIds });
+  }
+  items.push({ id: contentItemId(slug, '_all', 'all_bundle', 'a', acupoint.allBundleVersion || 1), acupoint: slug, accountId: '_all', type: 'all_bundle', variant: 'a', version: acupoint.allBundleVersion || 1, hash: textHash(map.all), preview: `${acupoint.displayName}：全部六组内容`, copyKey: 'all' });
+  return items;
+}

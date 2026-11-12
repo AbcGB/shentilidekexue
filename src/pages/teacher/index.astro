@@ -15,6 +15,7 @@ const accounts = sortedAccounts(accountSettings);
     <h1>老师工作台</h1>
     <p class="muted">打开当天的穴位 → 找到自己的账号 → 复制标题、描述、关键词 → 粘贴到平台发布 → 把链接或截图发到工作群。</p>
     <p class="notice">本页为内部工作页面（已设置搜索引擎不收录），但没有登录保护，任何拿到链接的人都能看到。请不要在这里放患者资料、个人隐私或其他敏感内容。所有文案需人工确认后再发布。</p>
+    <p class="small muted">每条文案旁会显示全站共享的匿名复制次数（累计和近7天），方便挑选用得较少的版本；不记录是谁复制。<a href={u('/about/#privacy')}>隐私说明</a></p>
 
     <h2>今日需要发布 <span class="small muted">（{latest}）</span></h2>
     {todays.length > 0 ? (

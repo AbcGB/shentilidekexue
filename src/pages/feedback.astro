@@ -37,6 +37,7 @@ const template = `【网站意见反馈】\n老师称呼：\n对应穴位：\n�
       <li>网站不提供在线诊疗或医疗咨询；如有身体不适请到正规医疗机构就诊。</li>
       <li>专业知识纠错请尽量注明依据（教材名称、版次、页码或国家标准条目）。</li>
       <li>如使用第三方表单服务，数据由该服务商按其隐私政策处理。</li>
+      <li>老师工作台的复制次数为匿名统计，不记录是谁复制，详见 <a href={u('/about/#privacy')}>隐私说明</a>。</li>
     </ul>
     <script type="application/json" id="copy-data" set:html={JSON.stringify({ feedback: template })} />
   </div>
