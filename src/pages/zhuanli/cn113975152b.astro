@@ -1,0 +1,61 @@
+---
+import Base from '../../layouts/Base.astro';
+import patent from '../../content/patents/cn113975152b.json';
+import { site, siteUrl } from '../../lib/data';
+import { u } from '../../lib/url';
+const patentModules = import.meta.glob('../../content/patents/*.md', { eager: true });
+const patentMd: any = Object.values(patentModules).find((m: any) => m.file?.includes('cn113975152b') || m.url?.includes('cn113975152b')) || Object.values(patentModules)[0];
+const Content = patentMd.Content;
+const path = patent.path;
+const title = `发明专利 ${patent.patentNumber}：${patent.title}`;
+const description = `${patent.title}（${patent.patentNumber}）的专利公开信息转载页。发明人${patent.inventors.join('、')}，申请人${patent.applicant}。该专利并非皮门多普勒设备本身的专利。`;
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description,
+  inLanguage: 'zh-CN',
+  dateModified: patent.updateDate,
+  about: { '@type': 'Legislation', name: patent.patentNumber, identifier: patent.patentNumber },
+  publisher: { '@type': 'Organization', name: site.siteName },
+  mainEntityOfPage: `${siteUrl()}${base}${path}`,
+};
+---
+<Base title={title} description={description} path={path} ogType="article" updated={patent.updateDate} keywords={['CN113975152B', '发明专利', '皮穿支', '3D打印', '丁志伟', '丁奕铭', '潍坊新星中智医疗科技有限公司']} jsonLd={jsonLd}>
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/equipment/')}>皮门多普勒</a> › 专利公开信息</div>
+    <h1>{patent.title}</h1>
+    <p class="muted">{patent.patentNumber}</p>
+
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><th>专利号</th><td>{patent.patentNumber}</td></tr>
+          <tr><th>申请号</th><td>{patent.applicationNumber}</td></tr>
+          <tr><th>发明人</th><td>{patent.inventors.join('、')}</td></tr>
+          <tr><th>申请人</th><td>{patent.applicant}</td></tr>
+          <tr><th>申请日</th><td>{patent.filingDate}</td></tr>
+          <tr><th>申请公布日</th><td>{patent.applicationPublicationDate}</td></tr>
+          <tr><th>进入实质审查</th><td>{patent.examinationDate}</td></tr>
+          <tr><th>授权公告日</th><td>{patent.grantDate}</td></tr>
+          <tr><th>预计届满日</th><td>{patent.anticipatedExpiration}（发明专利保护期限自申请日起二十年，以官方登记为准）</td></tr>
+          <tr><th>法律状态</th><td>{patent.statusNote}</td></tr>
+          <tr><th>分类号</th><td>{patent.ipc.join('、')}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <article class="prose lesson patent-text">
+      <Content />
+    </article>
+
+    <section class="detail-section" id="source">
+      <h2>来源链接</h2>
+      <p>本页公开信息整理自该专利的公开文本，便于在国内直接阅读。原文地址如下（部分网络可能无法打开）：</p>
+      <p class="source-url"><code>{patent.sourceUrl}</code></p>
+      <p class="small muted">也可在国家知识产权局专利检索系统中，用专利号 {patent.patentNumber} 或申请号 {patent.applicationNumber} 查询。法律状态和文本如有更新，以国家知识产权局为准。</p>
+      <p><a href={u('/equipment/#research')}>返回皮门多普勒：相关研究与专利</a></p>
+    </section>
+  </div>
+</Base>

@@ -82,5 +82,15 @@ ok(!htmlFiles.filter((f) => !f.startsWith('teacher/') && !f.startsWith('admin/')
 const nav = R('index.html').match(/<nav class="nav"[\s\S]*?<\/nav>/)[0];
 ok(nav.includes('皮门多普勒') && !nav.includes('>设备演示<'), '主导航应统一称“皮门多普勒”');
 
+const eq = R('equipment/index.html');
+ok(eq.includes('/zhuanli/cn113975152b/'), '设备页应链接到站内专利公开页');
+ok(!/href="https:\/\/patents\.google\.com/.test(eq), '设备页不应再跳转到 Google Patents');
+ok(fs.existsSync(path.join(dist, 'zhuanli/cn113975152b/index.html')), '缺少专利公开信息页');
+const pat = R('zhuanli/cn113975152b/index.html');
+ok(pat.includes('CN113975152B') && pat.includes('https://patents.google.com/patent/CN113975152B/zh'), '专利页应收录公开信息和原文地址');
+ok(pat.includes('并非皮门多普勒设备本身的专利'), '专利页应说明这不是皮门设备专利');
+ok(/\/zhuanli\/cn113975152b\//.test(sitemap), '站点地图应包含专利公开页');
+
+
 console.log(`\n网站逻辑测试：通过 ${passes} 项，失败 ${fails} 项`);
 process.exit(fails ? 1 : 0);

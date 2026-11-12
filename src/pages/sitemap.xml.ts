@@ -13,6 +13,7 @@ export function GET() {
     { loc: '/learning/today/', lastmod: latest },
     { loc: '/learning/archive/', lastmod: latest },
     { loc: '/equipment/', lastmod: (equipment as any).updateDate },
+    { loc: '/zhuanli/cn113975152b/', lastmod: '2026-11-13' },
     { loc: '/ziliao/', lastmod: latest },
     { loc: '/about/' },
     { loc: '/feedback/' },
