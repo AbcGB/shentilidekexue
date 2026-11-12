@@ -26,7 +26,11 @@ export function buildSearchIndex() {
     });
   }
   const pages = [
-    { title: '皮门多普勒（设备演示与培训）', url: '/equipment/', kw: '设备演示 设备培训 培训 多普勒 皮门 探头 提示音 丁老师 丁志伟 专利 定位演示 pimen duopule', desc: '丁老师研发的皮门多普勒设备：外观、探头、操作流程与定位演示记录。' },
+    { title: '皮门多普勒设备', url: '/equipment/', kw: '设备 设备演示 多普勒 皮门 探头 提示音 丁老师 丁志伟 定位 穴位定位设备 采购 pimen duopule shebei', desc: '丁志伟老师研发的穴位定位设备，经过多代改进，定位操作快速、精细：外观、操作流程、配套培训与设备咨询。' },
+    { title: '皮门多普勒设备迭代与技术发展', url: '/equipment/history/', kw: '设备迭代 历代 升级 第一代 第二代 最新设备 技术发展 diedai', desc: '按代记录皮门多普勒的外观、主机、探头、信号和操作流程变化。' },
+    { title: '皮穿支针刺培训', url: '/training/', kw: '培训 针刺培训 皮穿支培训 课程 学习 设备培训 丁志伟 peixun', desc: '丁志伟老师团队开设，面向医生和相关专业人士，以线下实操为主，具体安排请咨询。' },
+    { title: '设备咨询', url: '/contact/device/', kw: '咨询 设备咨询 采购 购买 演示 联系 陈老师 zixun', desc: '皮门多普勒设备的演示、采购咨询：在工作群 @陈老师。' },
+    { title: '培训咨询', url: '/contact/training/', kw: '咨询 培训咨询 报名 开课 联系 陈老师 zixun peixun', desc: '皮穿支针刺培训的时间、地点咨询：在工作群 @陈老师。' },
     { title: '发明专利 CN113975152B：一种基于3D打印的个性化皮穿支定位装置及其制作方法', url: '/zhuanli/cn113975152b/', kw: '专利 CN113975152B 3D打印 丁志伟 丁奕铭 潍坊新星中智 皮穿支定位装置 zhuanli patent', desc: '该发明专利的公开信息转载页，便于在国内阅读，不必打开 Google。该专利并非皮门多普勒设备本身的专利。' },
     { title: '皮穿支学习路径', url: '/xuexi/', kw: '皮穿支 学习 课程 学习路径 穿支 pichuanzhi xuexi', desc: '按顺序学皮穿支：定义、层次、显微外科、与腧穴的研究、多普勒定位。' },
     { title: '老师工作台（视频多组文案）', url: '/teacher/', kw: '工作台 文案 标题 描述 关键词 复制 发布 laoshi gongzuotai', desc: '每条视频若干组标题、描述、关键词，按编号一键复制。' },

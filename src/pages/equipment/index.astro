@@ -3,56 +3,72 @@ import QuickAnswer from '../../components/QuickAnswer.astro';
 import Base from '../../layouts/Base.astro';
 import UpdateList from '../../components/UpdateList.astro';
 import ReviewBadge from '../../components/ReviewBadge.astro';
-import { equipment, getAcupointsOrdered, getLearning } from '../../lib/data';
+import { equipment, getAcupointsOrdered, getLearning, siteUrl, site } from '../../lib/data';
 import { u } from '../../lib/url';
 const eq: any = equipment;
 const points = getAcupointsOrdered();
 const entries = getLearning().filter((e) => e.type === '设备演示');
+const jsonLd = { '@context': 'https://schema.org', '@type': 'Product', name: '皮门多普勒', description: eq.intro, brand: { '@type': 'Brand', name: site.brand }, url: siteUrl() + '/equipment/' };
 ---
-<Base title="皮门多普勒：丁志伟老师研发的穴位定位演示设备与培训" path="/equipment/" description="皮门多普勒是丁志伟老师研发的多普勒设备，用于穴位定位演示。本页介绍设备用途、外观、操作过程、设备培训与相关研究。只记录真实操作过程，不宣称百分之百精准或治疗效果。" keywords={['皮门多普勒', '皮门', '丁志伟', '多普勒定位演示', '皮穿支', '穴位定位', '设备培训', '身体里的科学']}>
+<Base title="皮门多普勒：丁志伟老师研发的穴位定位设备" path="/equipment/" jsonLd={jsonLd} description="皮门多普勒是丁志伟老师研发的穴位定位设备，经过多代改进，定位操作快速、精细。本页介绍设备用途、外观、操作流程、设备迭代、配套培训，以及设备咨询方式。" keywords={['皮门多普勒', '皮门', '丁志伟', '穴位定位设备', '多普勒', '皮穿支', '皮穿支针刺培训', '设备咨询', '身体里的科学']}>
   <div class="container">
     <div class="breadcrumb"><a href={u('/')}>首页</a> › 皮门多普勒</div>
-    <h1>{eq.title}</h1>
+    <h1>{eq.title}：{eq.subtitle}</h1>
     <div class="detail-meta"><ReviewBadge status={eq.reviewStatus} /><span class="small muted">更新时间：{eq.updateDate}</span></div>
-    <QuickAnswer ids={['pimen']} links={false} />
+    <p>{eq.intro}</p>
     <ul class="eq-highlights">{eq.highlights.map((h: string) => <li>{h}</li>)}</ul>
-    <nav class="toc" aria-label="本页目录"><a href="#training">设备培训</a><a href="#research">相关研究与专利</a><a href="#demos">各穴位定位演示</a><a href={u('/xuexi/duopule-dingwei/')}>多普勒怎么找皮穿支</a></nav>
-    <div class="notice"><strong>说明：</strong><ul style="margin:4px 0 0;padding-left:1.2em">{eq.statement.map((s: string) => <li>{s}</li>)}</ul></div>
+    <div class="cta-row" style="margin:14px 0">
+      <a class="btn btn-lg" href={u('/contact/device/')}>设备咨询</a>
+      <a class="btn btn-lg btn-outline" href={u('/training/')}>皮穿支针刺培训</a>
+    </div>
+    <nav class="toc" aria-label="本页目录"><a href="#look">设备外观</a><a href="#steps">怎么操作</a><a href={u('/equipment/history/')}>设备迭代</a><a href="#training">配套培训</a><a href="#demos">各穴位定位演示</a><a href="#research">相关研究与背景</a></nav>
+    <QuickAnswer ids={['pimen']} links={false} />
 
-    <section class="detail-section">
-      <h2>设备整体介绍与外观</h2>
+    <section class="detail-section" id="look">
+      <h2>设备外观</h2>
       <p>{eq.appearance.text}</p>
-      <div class="table-wrap"><table><thead><tr><th>部件</th><th>外观描述</th></tr></thead><tbody>{eq.appearance.parts.map((x: any) => <tr><td>{x.name}</td><td>{x.desc}</td></tr>)}</tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>部件</th><th>说明</th></tr></thead><tbody>{eq.appearance.parts.map((x: any) => <tr><td>{x.name}</td><td>{x.desc}</td></tr>)}</tbody></table></div>
       {eq.photos.length > 0 ? (
         <div class="grid grid-2" style="margin-top:12px">{eq.photos.map((ph: any) => <figure style="margin:0"><img src={u(ph.src)} alt={ph.alt} loading="lazy" /><figcaption class="small muted">{ph.caption || ph.alt}</figcaption></figure>)}</div>
       ) : <div class="placeholder" style="margin-top:12px"><strong>设备照片：</strong>{eq.appearance.photoStatus}</div>}
     </section>
 
-    <section class="detail-section">
-      <h2>探头介绍</h2>
-      <p>主机通过弹簧线连接黑色笔形探头，探头前端为圆形白色接触头。操作时将接触头轻放在体表并缓慢移动。探头的具体技术参数待研发人员确认。</p>
-    </section>
-
-    <section class="detail-section">
-      <h2>操作展示</h2>
+    <section class="detail-section" id="steps">
+      <h2>怎么操作</h2>
       <ol>{eq.operationSteps.map((s: string) => <li>{s}</li>)}</ol>
-      <p class="small muted">以上为演示中的实际操作过程描述，设备技术原理、检测能力及适用范围以研发和技术人员的正式说明为准（待确认）。</p>
+      <div class="placeholder">{eq.soundDemo}</div>
     </section>
 
     <section class="detail-section">
-      <h2>多普勒提示音演示</h2>
-      <div class="placeholder">{eq.soundDemo}</div>
+      <h2>设备迭代与技术发展</h2>
+      <p>皮门多普勒经过多代改进。各代设备的外观、主机、探头、信号和操作流程变化，整理在设备迭代页。</p>
+      <p><a class="btn btn-outline" href={u('/equipment/history/')}>查看设备迭代 →</a></p>
     </section>
 
     <section class="detail-section" id="training">
       <h2>{eq.training.title}</h2>
       <p>{eq.training.text}</p>
       <p class="notice notice-info">{eq.training.status}</p>
-      <p><a class="btn btn-outline" href={u('/feedback/')}>联系负责人</a></p>
+      <div class="cta-row"><a class="btn" href={u('/training/')}>看培训介绍</a><a class="btn btn-outline" href={u('/contact/training/')}>培训咨询</a></div>
+    </section>
+
+    <section class="detail-section" id="demos">
+      <h2>各穴位定位演示</h2>
+      <div class="table-wrap"><table><thead><tr><th>穴位</th><th>经络</th><th>演示素材</th></tr></thead><tbody>
+        {points.map((p: any) => <tr><td><a href={u(`/xuewei/${p.slug}/#doppler`)}>{p.displayName}</a></td><td>{p.meridian}</td><td>{p.dopplerDemo.videos?.length ? `${p.dopplerDemo.videos.length} 个视频` : '待提供'}</td></tr>)}
+      </tbody></table></div>
+      {eq.videos.length > 0 && <ul>{eq.videos.map((v: any) => <li><a href={v.url} target="_blank" rel="noopener">{v.title}</a></li>)}</ul>}
+      {entries.length > 0 && <><h3>演示更新记录</h3><UpdateList entries={entries} showDate /></>}
+    </section>
+
+    <section class="detail-section">
+      <h2>待补充的设备资料</h2>
+      <ul>{eq.pending.map((m: string) => <li>{m}</li>)}</ul>
     </section>
 
     <section class="detail-section" id="research">
-      <h2>相关研究与专利</h2>
+      <h2>相关研究与背景</h2>
+      <p class="small muted">以下是皮穿支方向的专利和早期研究，作为技术背景参考；当前设备以丁老师团队提供的最新资料为准。</p>
       {eq.research.map((r: any) => (
         <div style="margin:10px 0">
           <h3 style="margin:0 0 4px;font-size:1rem">{r.title}</h3>
@@ -62,18 +78,11 @@ const entries = getLearning().filter((e) => e.type === '设备演示');
       ))}
     </section>
 
-    <section class="detail-section" id="demos">
-      <h2>不同穴位的定位演示</h2>
-      <div class="table-wrap"><table><thead><tr><th>穴位</th><th>经络</th><th>演示素材</th></tr></thead><tbody>
-        {points.map((p: any) => <tr><td><a href={u(`/xuewei/${p.slug}/#doppler`)}>{p.displayName}</a></td><td>{p.meridian}</td><td>{p.dopplerDemo.videos?.length ? `${p.dopplerDemo.videos.length} 个视频` : '待提供'}</td></tr>)}
-      </tbody></table></div>
-      {eq.videos.length > 0 && <ul>{eq.videos.map((v: any) => <li><a href={v.url} target="_blank" rel="noopener">{v.title}</a></li>)}</ul>}
+    <section class="consult-strip" style="margin-top:24px">
+      <h2>想了解或采购皮门多普勒？</h2>
+      <p>设备演示、采购和培训安排，具体请咨询。</p>
+      <div class="cta-row" style="justify-content:center"><a class="btn" href={u('/contact/device/')}>设备咨询</a><a class="btn btn-outline" href={u('/contact/training/')}>培训咨询</a></div>
     </section>
-
-    <section class="detail-section">
-      <h2>相关学习资料</h2>
-      <ul>{eq.materials.map((m: string) => <li>{m}</li>)}</ul>
-      {entries.length > 0 && <><h3>演示更新记录</h3><UpdateList entries={entries} showDate /></>}
-    </section>
+    <p class="page-foot-note">{eq.footnote}</p>
   </div>
 </Base>

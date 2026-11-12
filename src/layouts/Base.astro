@@ -23,17 +23,19 @@ const ogImageUrl = /^https?:/.test(ogImage) ? ogImage : siteUrl() + base.replace
 const current = Astro.url.pathname;
 const nav = [
   { href: '/', label: '首页' },
+  { href: '/equipment/', label: '皮门多普勒' },
+  { href: '/training/', label: '针刺培训' },
   { href: '/xuexi/', label: '皮穿支学习' },
   { href: '/xuewei/', label: '穴位知识库' },
   { href: '/learning/today/', label: '今日学习' },
-  { href: '/equipment/', label: '皮门多普勒' },
   { href: '/teacher/', label: '老师工作台' },
-  { href: '/feedback/', label: '意见反馈' },
+  { href: '/contact/device/', label: '咨询' },
 ];
 const isCurrent = (href: string) => {
   const full = u(href);
   if (href === '/') return current === full;
   if (href === '/learning/today/') return current.startsWith(u('/learning/'));
+  if (href === '/contact/device/') return current.startsWith(u('/contact/'));
   return current.startsWith(full);
 };
 ---
@@ -84,16 +86,20 @@ const isCurrent = (href: string) => {
     <div class="container">
       <div><strong style="color:#fff">{site.siteName}</strong> · {site.slogan}</div>
       <div class="footer-links">
+        <a href={u('/equipment/')}>皮门多普勒设备</a>
+        <a href={u('/equipment/history/')}>设备迭代</a>
+        <a href={u('/training/')}>皮穿支针刺培训</a>
+        <a href={u('/contact/device/')}>设备咨询</a>
+        <a href={u('/contact/training/')}>培训咨询</a>
         <a href={u('/xuexi/')}>皮穿支学习路径</a>
         <a href={u('/xuewei/')}>穴位知识库</a>
         <a href={u('/learning/today/')}>今日学习</a>
         <a href={u('/learning/archive/')}>历史更新</a>
-        <a href={u('/equipment/')}>皮门多普勒定位演示</a>
         <a href={u('/ziliao/')}>学习资料</a>
         <a href={u('/about/')}>关于我们</a>
         <a href={u('/feedback/')}>意见反馈</a>
       </div>
-      <div>本站内容为皮穿支解剖知识、传统经络知识科普与设备操作演示记录，不构成诊断或治疗建议；身体不适请到正规医疗机构就诊。皮穿支与腧穴的对应关系目前仍在研究中，标注“待审核”的内容尚未经专业老师确认。</div>
+      <div>本站介绍皮穿支知识、经络穴位知识和皮门多普勒设备，不构成诊疗建议；身体不适请到正规医疗机构就诊。标注“待审核”的内容尚未经专业老师确认。</div>
       {site.icp.number && <div><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">{site.icp.number}</a></div>}
     </div>
   </footer>

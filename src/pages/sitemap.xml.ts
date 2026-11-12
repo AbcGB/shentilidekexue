@@ -1,5 +1,5 @@
 // 自动生成站点地图。老师工作台、搜索页不会出现在这里。
-import { getAcupoints, getLearning, getLessons, equipment, siteUrl } from '../lib/data';
+import { getAcupoints, getLearning, getLessons, equipment, equipmentHistory, training, siteUrl } from '../lib/data';
 
 export function GET() {
   const base = siteUrl() + (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
@@ -13,6 +13,10 @@ export function GET() {
     { loc: '/learning/today/', lastmod: latest },
     { loc: '/learning/archive/', lastmod: latest },
     { loc: '/equipment/', lastmod: (equipment as any).updateDate },
+    { loc: '/equipment/history/', lastmod: (equipmentHistory as any).updateDate },
+    { loc: '/training/', lastmod: (training as any).updateDate },
+    { loc: '/contact/device/' },
+    { loc: '/contact/training/' },
     { loc: '/zhuanli/cn113975152b/', lastmod: '2026-11-13' },
     { loc: '/ziliao/', lastmod: latest },
     { loc: '/about/' },

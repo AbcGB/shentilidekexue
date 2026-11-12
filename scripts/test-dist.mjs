@@ -22,7 +22,7 @@ const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&qu
 const meta = (html, re) => { const m = html.match(re); return m ? decode(m[1]) : null; };
 
 console.log('A. 页面是否全部生成');
-const pages = ['admin/stats/index.html', 'index.html', 'xuexi/index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
+const pages = ['admin/stats/index.html', 'index.html', 'xuexi/index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'equipment/history/index.html', 'training/index.html', 'contact/device/index.html', 'contact/training/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
 const slugs = ['zusanli', 'yanglingquan', 'sanyinjiao', 'waiguan', 'houxi', 'shenmen'];
 const wbSlugs = ['zusanli', 'yanglingquan', 'sanyinjiao']; // 已录入负责人原文的穴位
 for (const s of slugs) pages.push(`xuewei/${s}/index.html`);
@@ -163,7 +163,7 @@ if (chromium && chromePath) {
   for (const vp of [{ width: 360, height: 740 }, { width: 390, height: 844 }, { width: 768, height: 1024 }]) {
     const mctx = await browser.newContext({ viewport: vp, isMobile: vp.width < 600, hasTouch: true, userAgent: 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36 MicroMessenger/8.0.40' });
     const mp = await mctx.newPage();
-    for (const p of ['/', '/xuewei/', '/xuewei/zusanli/', '/xuewei/sanyinjiao/', '/teacher/', '/teacher/zusanli/', '/learning/today/', '/learning/archive/', '/equipment/', '/feedback/', '/about/', '/ziliao/']) {
+    for (const p of ['/', '/xuewei/', '/xuewei/zusanli/', '/xuewei/sanyinjiao/', '/teacher/', '/teacher/zusanli/', '/learning/today/', '/learning/archive/', '/equipment/', '/equipment/history/', '/training/', '/contact/device/', '/contact/training/', '/feedback/', '/about/', '/ziliao/']) {
       await mp.goto(BASE + p);
       const over = await mp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       ok(over <= 1, `${vp.width}px 宽度下 ${p} 出现横向滚动（${over}px）`);

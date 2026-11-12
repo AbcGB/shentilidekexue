@@ -3,6 +3,8 @@ import site from '../config/site.json';
 import copySettings from '../content/copy-settings.json';
 import filmingList from '../content/filming/acupoint-list.json';
 import equipment from '../content/equipment/device.json';
+import equipmentHistory from '../content/equipment/history.json';
+import training from '../content/training.json';
 import { hasWorkbenchCopies } from './copy-core.mjs';
 
 export type CopyVariant = { id: string; no: number; angle: string; title: string; description: string; keywords: string[]; hashtags?: string[]; versions?: Record<string, number> };
@@ -14,7 +16,7 @@ export type LearningEntry = {
   reviewStatus: string; publishStatus: string; keywords?: string[]; link?: string;
 };
 
-export { site, copySettings, equipment };
+export { site, copySettings, equipment, equipmentHistory, training };
 
 const acupointModules = import.meta.glob('../content/acupoints/*.json', { eager: true, import: 'default' });
 const learningModules = import.meta.glob('../content/learning/*.json', { eager: true, import: 'default' });

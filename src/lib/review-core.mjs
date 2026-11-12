@@ -16,7 +16,9 @@ export function buildReviewQueue({ lessons = [], acupoints = [], drafts = [], de
   const materials = [];
   if (!(device.photos || []).length) materials.push({ what: '皮门多普勒真实设备照片', where: '设备页 /equipment/', who: '负责人' });
   if (!(device.videos || []).length) materials.push({ what: '皮门多普勒真实操作与提示音视频', where: '设备页 /equipment/', who: '负责人' });
-  if ((device.statement || []).some((s) => /待与说明书核对/.test(s))) materials.push({ what: '设备说明书（核对约 8 MHz、约 2 厘米等参数和适用范围）', where: '设备页、学习路径第 5 课', who: '负责人 / 设备研发人员' });
+  if ((device.pending || []).some((s) => /说明书|技术指标/.test(s))) materials.push({ what: '设备说明书、当前版本型号、技术指标与测试记录（含学习路径第 5 课里约 8 MHz、约 2 厘米的核对）', where: '设备页、设备迭代页、学习路径第 5 课', who: '负责人 / 丁老师团队' });
+  materials.push({ what: '皮门多普勒历代设备资料（各代时间、外观、主要变化）', where: '设备迭代页 /equipment/history/', who: '丁老师团队' });
+  materials.push({ what: '皮穿支针刺培训的大纲、师资、时间、地点、费用和现场照片', where: '培训页 /training/', who: '负责人 / 丁老师团队' });
   const noDemo = published.filter((p) => !(p.dopplerDemo?.photos || []).length && !(p.dopplerDemo?.videos || []).length && !(p.videos || []).length);
   if (noDemo.length) materials.push({ what: `穴位定位演示视频或照片（${noDemo.map((p) => p.displayName).join('、')}）`, where: '各穴位页“多普勒定位演示”', who: '拍摄老师' });
   const noCopy = published.filter((p) => !(p.copySets || []).length && !draftSlugs.has(p.slug));

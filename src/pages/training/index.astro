@@ -1,0 +1,57 @@
+---
+import Base from '../../layouts/Base.astro';
+import ReviewBadge from '../../components/ReviewBadge.astro';
+import { training, siteUrl, site } from '../../lib/data';
+import { u } from '../../lib/url';
+const t: any = training;
+const jsonLd = { '@context': 'https://schema.org', '@type': 'Course', name: t.title, description: t.intro, inLanguage: 'zh-CN', provider: { '@type': 'Organization', name: site.brand, url: siteUrl() + '/' }, url: siteUrl() + '/training/' };
+---
+<Base title="皮穿支针刺培训：丁志伟老师团队开设" path="/training/" jsonLd={jsonLd} description="皮穿支针刺培训由丁志伟老师团队开设，面向医生和相关专业人士：皮穿支解剖、皮门多普勒设备操作、穴位定位实操与针刺操作，以线下实操为主。具体安排请咨询。" keywords={['皮穿支针刺培训', '皮穿支培训', '皮门多普勒培训', '丁志伟', '针刺培训', '穴位定位培训', '身体里的科学']}>
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 皮穿支针刺培训</div>
+    <h1>{t.title}</h1>
+    <div class="detail-meta"><ReviewBadge status={t.reviewStatus} /><span class="small muted">更新时间：{t.updateDate}</span></div>
+    <p>{t.intro}</p>
+    <div class="cta-row" style="margin:14px 0">
+      <a class="btn btn-lg" href={u('/contact/training/')}>培训咨询</a>
+      <a class="btn btn-lg btn-outline" href={u('/equipment/')}>了解皮门多普勒设备</a>
+    </div>
+
+    <section class="detail-section">
+      <h2>适合谁来学</h2>
+      <ul>{t.audience.map((a: string) => <li>{a}</li>)}</ul>
+    </section>
+
+    <section class="detail-section">
+      <h2>学什么</h2>
+      <p class="small muted">课程方向如下，完整大纲以丁老师团队正式发布为准。</p>
+      <div class="biz-grid">{t.modules.map((m: any) => <div class="card"><h3 style="margin:0 0 4px">{m.name}</h3><p style="margin:0">{m.desc}</p></div>)}</div>
+    </section>
+
+    <section class="detail-section">
+      <h2>课程安排</h2>
+      <div class="table-wrap"><table><tbody>{t.arrangement.map((r: any) => <tr><th style="width:7em">{r.k}</th><td>{r.v}</td></tr>)}</tbody></table></div>
+    </section>
+
+    <section class="detail-section">
+      <h2>学之前可以先看</h2>
+      <ul>
+        <li><a href={u('/xuexi/')}>皮穿支学习路径</a>：6 课讲清皮穿支的解剖基础。</li>
+        <li><a href={u('/xuewei/')}>穴位知识库</a>：常用穴位的标准定位和皮门多普勒定位演示。</li>
+        <li><a href={u('/equipment/')}>皮门多普勒设备介绍</a>：外观、操作流程和设备迭代。</li>
+      </ul>
+    </section>
+
+    <section class="detail-section">
+      <h2>待补充的培训资料</h2>
+      <ul>{t.pending.map((m: string) => <li>{m}</li>)}</ul>
+    </section>
+
+    <section class="consult-strip" style="margin-top:24px">
+      <h2>想参加皮穿支针刺培训？</h2>
+      <p>开课时间、地点和费用，具体安排请咨询。</p>
+      <div class="cta-row" style="justify-content:center"><a class="btn" href={u('/contact/training/')}>培训咨询</a><a class="btn btn-outline" href={u('/contact/device/')}>设备咨询</a></div>
+    </section>
+    <p class="page-foot-note">本站介绍不构成诊疗建议；培训的具体安排请咨询。</p>
+  </div>
+</Base>

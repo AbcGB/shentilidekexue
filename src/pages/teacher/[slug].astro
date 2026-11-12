@@ -41,7 +41,7 @@ const fields = [
         <div class="wb-top">
           <div><strong>复制这条视频的全部 {set.variants.length} 组</strong><div class="small muted">方便负责人发到工作群</div></div>
           <div class="wb-side">
-            <button class="btn" type="button" data-copy-key={`set:${set.id}`} data-item-id={idByKey[`set:${set.id}`]}>复制全部 {set.variants.length} 组</button>
+            <button class="btn btn-outline btn-group-copy" type="button" data-copy-key={`set:${set.id}`} data-item-id={idByKey[`set:${set.id}`]}>复制全部 {set.variants.length} 组</button>
             <div class="wb-stat" data-stat-for={idByKey[`set:${set.id}`]}>累计 <b data-t>–</b> 次 · 近7天 <b data-d7>–</b> 次</div>
           </div>
         </div>
@@ -65,7 +65,7 @@ const fields = [
                 <div class="wb-head">
                   <h3 class="wb-card-title"><span class="wb-no">{v.no}</span><span class="wb-angle">第 {v.no} 组{v.angle ? `：${v.angle}` : ''}</span></h3>
                   <div class="wb-side">
-                    <button class="btn" type="button" data-copy-key={`group:${k}`} data-item-id={idByKey[`group:${k}`]}>复制整组</button>
+                    <button class="btn btn-sm btn-group-copy" type="button" data-copy-key={`group:${k}`} data-item-id={idByKey[`group:${k}`]}>复制整组</button>
                     <div class="wb-stat" data-stat-for={idByKey[`group:${k}`]}>整组 累计 <b data-t>–</b> 次 · 近7天 <b data-d7>–</b> 次</div>
                   </div>
                 </div>
@@ -80,7 +80,7 @@ const fields = [
                         <div class="wb-text" data-field={f.key}>{text}</div>
                       </div>
                       <div class="wb-side">
-                        <button class="btn btn-outline" type="button" data-copy-key={`${f.key}:${k}`} data-item-id={itemId}>{f.btn}</button>
+                        <button class="btn" type="button" data-copy-key={`${f.key}:${k}`} data-item-id={itemId}>{f.btn}</button>
                         <div class="wb-stat" data-stat-for={itemId}>累计 <b data-t>–</b> 次<br />近7天 <b data-d7>–</b> 次</div>
                       </div>
                     </div>

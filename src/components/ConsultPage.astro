@@ -1,0 +1,55 @@
+---
+// 静态咨询页（设备咨询 / 培训咨询）。目前没有在线表单，只引导到工作群 @陈老师；不收集任何个人信息。
+import Base from '../layouts/Base.astro';
+import CopyRuntime from './CopyRuntime.astro';
+import { site } from '../lib/data';
+import { u } from '../lib/url';
+interface Props { kind: 'device' | 'training' }
+const { kind } = Astro.props;
+const fb = site.feedback;
+const isDevice = kind === 'device';
+const title = isDevice ? '设备咨询' : '培训咨询';
+const path = isDevice ? '/contact/device/' : '/contact/training/';
+const topic = isDevice ? '皮门多普勒设备' : '皮穿支针刺培训';
+const template = isDevice
+  ? `【皮门多普勒设备咨询】\n称呼：\n所在城市：\n单位/身份（如：医生、老师、机构）：\n想了解：设备演示 / 采购 / 使用培训 / 其他\n方便联系的时间：`
+  : `【皮穿支针刺培训咨询】\n称呼：\n所在城市：\n专业身份（如：执业医生、针灸老师）：\n想了解：开课时间 / 地点 / 课程内容 / 其他\n是否已有皮门多普勒设备：`;
+const other = isDevice ? { href: '/contact/training/', label: '培训咨询' } : { href: '/contact/device/', label: '设备咨询' };
+const back = isDevice ? { href: '/equipment/', label: '看皮门多普勒设备介绍' } : { href: '/training/', label: '看皮穿支针刺培训介绍' };
+---
+<Base title={`${title}：${topic}`} path={path} description={`${topic}${title}：目前请在「${site.brand}」工作群里 @陈老师 咨询，可复制咨询模板发送。`} keywords={[title, topic, '皮门多普勒', '皮穿支针刺培训', site.brand]}>
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › {title}</div>
+    <h1>{title}</h1>
+    <p>想了解{topic}{isDevice ? '的演示、采购和使用' : '的开课时间、地点和课程内容'}，请直接联系项目负责人陈老师。</p>
+
+    <div class="card" style="margin:16px 0">
+      <h2 style="margin-top:0">怎么咨询</h2>
+      <ol class="consult-steps">
+        <li>复制下面的咨询模板，填好称呼、城市和想了解的内容。</li>
+        <li>发到「{site.brand}」工作群（微信群），并 @陈老师。</li>
+        <li>陈老师会在群里或私下回复你{isDevice ? '设备的具体安排' : '培训的具体安排'}。</li>
+      </ol>
+      {fb.groupUrl && <p><a class="btn btn-outline" href={fb.groupUrl} target="_blank" rel="noopener">{fb.groupButtonText}</a></p>}
+      <p class="small muted" style="margin-bottom:0">网站目前没有在线提交表单。还不在群里的朋友，可以请认识的群内医生、老师帮忙转达。</p>
+    </div>
+
+    <div class="card">
+      <div class="section-head"><h2 style="margin-top:0">咨询模板</h2><button class="btn" type="button" data-copy-key="consult">复制咨询模板</button></div>
+      <div class="wb-text" style="background:#f7f9fc;padding:12px;border-radius:8px">{template}</div>
+    </div>
+
+    <h2>咨询须知</h2>
+    <ul>
+      <li>请不要在群里发患者姓名、病历、检查单等隐私信息。</li>
+      <li>网站和咨询不提供在线诊疗；身体不适请到正规医疗机构就诊。</li>
+      <li>{isDevice ? '设备价格、供货和演示安排' : '开课时间、地点和费用'}以陈老师的正式答复为准。</li>
+    </ul>
+    <div class="cta-row" style="margin-top:16px">
+      <a class="btn btn-outline" href={u(back.href)}>{back.label}</a>
+      <a class="btn btn-outline" href={u(other.href)}>{other.label}</a>
+    </div>
+    <script type="application/json" id="copy-data" set:html={JSON.stringify({ consult: template })} />
+  </div>
+  <CopyRuntime />
+</Base>

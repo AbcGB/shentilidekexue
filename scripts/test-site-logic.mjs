@@ -45,7 +45,8 @@ for (const a of qa.answers) {
   ok(a.reviewStatus === '待审核' || a.reviewStatus === '已审核', `简短回答 ${a.id} 缺审核状态`);
   // 简短回答可以在否定句里提到这些词，但不能有肯定的疗效、价格、报名、精准等说法
   const bad = /治愈|疗效显著|有效治疗|调理|保健|\d+\s*元|报名|学费|已证实|已被证明|科学证明|精准定位(?!，)|绝对准确/;
-  ok(!bad.test(a.a.replace(/不宣称它能百分之百精准定位/g, '')), `简短回答 ${a.id} 含禁止说法`);
+  ok(!bad.test(a.a), `简短回答 ${a.id} 含禁止说法`);
+  ok(!/不宣称|百分之百|精准到毫米|毫米级/.test(a.a), `简短回答 ${a.id} 不应出现“不宣称/百分之百/毫米”这类可被引用的说法`);
 }
 ok(qa.answers.find((a) => a.id === 'definition').a.includes('cutaneous perforator') && qa.answers.find((a) => a.id === 'definition').a.includes('pí chuān zhī'), '定义里应包含英文和拼音');
 // 结构化数据必须和可见文字一致
@@ -90,6 +91,37 @@ const pat = R('zhuanli/cn113975152b/index.html');
 ok(pat.includes('CN113975152B') && pat.includes('https://patents.google.com/patent/CN113975152B/zh'), '专利页应收录公开信息和原文地址');
 ok(pat.includes('并非皮门多普勒设备本身的专利'), '专利页应说明这不是皮门设备专利');
 ok(/\/zhuanli\/cn113975152b\//.test(sitemap), '站点地图应包含专利公开页');
+
+
+console.log('E. 第一阶段商业化页面');
+for (const f of ['equipment/history/index.html', 'training/index.html', 'contact/device/index.html', 'contact/training/index.html']) {
+  ok(fs.existsSync(path.join(dist, f)), `缺少页面 ${f}`);
+  if (!fs.existsSync(path.join(dist, f))) continue;
+  ok(/<meta name="robots" content="index, follow"/.test(R(f)), `${f} 应允许收录`);
+  ok(sitemap.includes('/' + f.replace('index.html', '') + '<'), `站点地图缺少 ${f}`);
+}
+const home = R('index.html');
+for (const p of ['/equipment/', '/training/', '/contact/device/', '/contact/training/']) ok(home.includes(`href="${BASE}${p}"`), `首页缺少入口 ${p}`);
+for (const p of ['/training/', '/contact/']) ok(nav.includes(`href="${BASE}${p}`), `主导航缺少 ${p}`);
+const eqText = text(eq);
+ok(!/不宣称/.test(eqText), '设备页不应再出现“不宣称……”说明列表');
+ok(eqText.includes('定位操作快速、精细'), '设备页应介绍“定位操作快速、精细”');
+ok(eqText.includes('本站介绍不构成诊疗建议'), '设备页页脚应保留简短的诊疗建议说明');
+ok(eqText.includes('并非皮门多普勒设备本身的专利'), '设备页专利说明应保留“并非皮门多普勒设备本身的专利”');
+ok(eq.includes(`href="${BASE}/equipment/history/"`) && eq.includes(`href="${BASE}/training/"`) && eq.includes(`href="${BASE}/contact/device/"`), '设备页应链接到设备迭代、培训和设备咨询');
+ok(/待审核/.test(R('index.html')) && /待审核/.test(eq), '首页和设备页应保留“待审核”标记');
+const hist = text(R('equipment/history/index.html'));
+ok(hist.includes('待补充') && !/\d{4}\s*年/.test(hist), '设备迭代页各代应标“待补充”，不能出现未提供的年份');
+ok(text(R('training/index.html')).includes('具体安排请咨询'), '培训页未定的安排应写“具体安排请咨询”');
+for (const f of ['contact/device/index.html', 'contact/training/index.html']) {
+  const h = R(f);
+  ok(!/<form\b|<input\b|<textarea\b(?![^>]*readonly)/.test(h.replace(/<div class="manual-dialog"[\s\S]*?<\/div>\s*<\/div>/, '')), `${f} 不应有收集信息的表单`);
+  ok(text(h).includes('@陈老师'), `${f} 应引导到工作群 @陈老师`);
+}
+for (const f of htmlFiles.filter((f) => !f.startsWith('teacher/') && !f.startsWith('admin/'))) {
+  const t = text(R(f));
+  ok(!/精准到毫米|毫米级|百分之百精准|治愈/.test(t), `${f} 出现不应使用的说法（精准到毫米/毫米级/百分之百精准/治愈）`);
+}
 
 
 console.log(`\n网站逻辑测试：通过 ${passes} 项，失败 ${fails} 项`);
