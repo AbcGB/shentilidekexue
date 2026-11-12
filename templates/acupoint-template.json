@@ -89,52 +89,20 @@
   "publishStatus": "draft",
   "publishDate": "2026-11-13",
   "updateDate": "2026-11-13",
-  "copyStatus": "待人工确认后发布",
-  "accountCopies": [
+  "copyStatus": "负责人提供原文",
+  "copySets": [
     {
-      "accountId": "wx-video",
-      "title": "",
-      "description": "",
-      "keywords": [],
-      "hashtags": []
-    },
-    {
-      "accountId": "douyin",
-      "title": "",
-      "description": "",
-      "keywords": [],
-      "hashtags": []
-    },
-    {
-      "accountId": "xiaohongshu",
-      "title": "",
-      "description": "",
-      "keywords": [],
-      "hashtags": []
-    },
-    {
-      "accountId": "wechat-mp",
-      "title": "",
-      "description": "",
-      "keywords": [],
-      "hashtags": []
-    },
-    {
-      "accountId": "ding-device",
-      "title": "",
-      "description": "",
-      "keywords": [],
-      "hashtags": []
-    },
-    {
-      "accountId": "other-teacher",
-      "title": "",
-      "description": "",
-      "keywords": [],
-      "hashtags": []
+      "id": "video",
+      "label": "（穴位名）定位与皮门多普勒演示视频",
+      "note": "负责人提供的原文，逐字录入，未改写。",
+      "variants": [
+        { "id": "g1", "no": 1, "title": "", "description": "", "keywords": "" },
+        { "id": "g2", "no": 2, "title": "", "description": "", "keywords": "" },
+        { "id": "g3", "no": 3, "title": "", "description": "", "keywords": "" },
+        { "id": "g4", "no": 4, "title": "", "description": "", "keywords": "" },
+        { "id": "g5", "no": 5, "title": "", "description": "", "keywords": "" },
+        { "id": "g6", "no": 6, "title": "", "description": "", "keywords": "" }
+      ]
     }
-  ],
-  "wechatArticle": {
-    "status": "待制作"
-  }
+  ]
 }

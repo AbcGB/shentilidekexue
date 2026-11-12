@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import ReviewBadge from '../../components/ReviewBadge.astro';
+import { hasWorkbenchCopies } from '../../lib/copy-core.mjs';
 import { getAcupoints, getArticle, getLearning, site, siteUrl } from '../../lib/data';
 import { u } from '../../lib/url';
 
@@ -38,7 +39,7 @@ const reviewed = p.reviewStatus === '已审核';
       {!reviewed && <p class="notice">本页内容整理自国家标准与针灸教材，<strong>尚未经专业老师审核确认（待审核）</strong>。仅供学习参考，不构成诊断或治疗建议。</p>}
       <nav class="toc" aria-label="本页目录">
         <a href="#location">标准位置</a><a href="#applications">传统应用</a><a href="#doppler">多普勒定位演示</a><a href="#knowledge">相关知识</a><a href="#media">视频和图片</a><a href="#review">审核信息</a>
-        <a href={u(`/teacher/${p.slug}/`)} style="background:var(--blue-soft)">老师工作台：复制发布文案</a>
+        {hasWorkbenchCopies(p) && <a href={u(`/teacher/${p.slug}/`)} style="background:var(--blue-soft)">老师工作台：复制发布文案</a>}
       </nav>
     </header>
 

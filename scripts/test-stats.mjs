@@ -22,7 +22,7 @@ const browser = await chromium.launch({ executablePath: chromePath, args: ['--no
 
 async function snapshot() {
   const out = {};
-  for (const a of ['sanyinjiao', 'zusanli', 'houxi']) {
+  for (const a of ['sanyinjiao', 'zusanli', 'yanglingquan']) {
     const r = await (await fetch(`${BASE}/api/stats?acupoint=${a}`)).json();
     for (const [k, v] of Object.entries(r.stats)) out[k] = v.t;
   }
@@ -30,7 +30,10 @@ async function snapshot() {
 }
 function diff(a, b) { const d = {}; for (const k of Object.keys(b)) if ((b[k] || 0) !== (a[k] || 0)) d[k] = b[k] - (a[k] || 0); return d; }
 const same = (d, exp) => JSON.stringify(Object.entries(d).sort()) === JSON.stringify(Object.entries(exp).sort());
-const id = (a, acc, t) => `${a}:${acc}:${t}:a:v1`;
+// 旧测试按“账号”写，这里把旧账号名对应到新的“视频/组编号”（组编号 = variant id）
+const K = { 'wx-video': 'video/g1', douyin: 'video/g2', xiaohongshu: 'video/g3', 'wechat-mp': 'video/g4', 'other-teacher': 'video/g5', 'ding-device': 'video/g6' };
+const T2 = { account_bundle: 'group_bundle', all_bundle: 'set_bundle' };
+const id = (a, acc, t) => (acc === '_all' ? `${a}:video:_all:${T2[t] || t}:v1` : `${a}:${K[acc].replace('/', ':')}:${T2[t] || t}:v1`);
 
 async function teacher(ctxOpts = {}) {
   const ctx = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'], viewport: { width: 1280, height: 900 }, ...ctxOpts });
@@ -52,7 +55,7 @@ console.log('1. 老师A复制标题1 → 标题1 +1');
 const A = await teacher();
 await open(A.page, 'sanyinjiao');
 let before = await snapshot();
-await click(A.page, 'title:wx-video');
+await click(A.page, 'title:video/g1');
 let after = await snapshot();
 ok(same(diff(before, after), { [id('sanyinjiao', 'wx-video', 'title')]: 1 }), '只有三阴交·视频号标题 +1');
 ok((await statText(A.page, id('sanyinjiao', 'wx-video', 'title'))) === '1' && (await d7Text(A.page, id('sanyinjiao', 'wx-video', 'title'))) === '1', '页面上累计与近7天立即更新为 1');
@@ -63,68 +66,66 @@ const B = await teacher();
 await open(B.page, 'sanyinjiao');
 ok((await statText(B.page, id('sanyinjiao', 'wx-video', 'title'))) === '1', '老师B看到标题1累计 1');
 before = await snapshot();
-await click(B.page, 'title:douyin');
+await click(B.page, 'title:video/g2');
 after = await snapshot();
 ok(same(diff(before, after), { [id('sanyinjiao', 'douyin', 'title')]: 1 }), '标题2（抖音）独立 +1，标题1 不变');
 
 console.log('3/4. 复制描述不加标题；复制关键词不加描述；话题标签独立');
 before = await snapshot();
-await click(B.page, 'description:wx-video');
+await click(B.page, 'description:video/g1');
 after = await snapshot();
 ok(same(diff(before, after), { [id('sanyinjiao', 'wx-video', 'description')]: 1 }), '描述 +1，标题不变');
 before = after;
-await click(B.page, 'keywords:wx-video');
+await click(B.page, 'keywords:video/g1');
 after = await snapshot();
 ok(same(diff(before, after), { [id('sanyinjiao', 'wx-video', 'keywords')]: 1 }), '关键词 +1，描述不变');
-before = after;
-await click(B.page, 'hashtags:wx-video');
-after = await snapshot();
-ok(same(diff(before, after), { [id('sanyinjiao', 'wx-video', 'hashtags')]: 1 }), '话题标签 +1，其他不变');
 
 console.log('5/6. 三阴交不影响足三里；不同账号不混淆');
 const zs = Object.entries(after).filter(([k]) => k.startsWith('zusanli:'));
 ok(zs.length > 0 && zs.every(([, v]) => v === 0), '足三里全部为 0');
-ok(Object.entries(after).filter(([k]) => k.startsWith('sanyinjiao:') && !k.includes(':wx-video:') && k !== id('sanyinjiao', 'douyin', 'title')).every(([, v]) => v === 0), '三阴交其他账号均为 0');
+ok(Object.entries(after).filter(([k]) => k.startsWith('sanyinjiao:') && !k.includes(':video:g1:') && k !== id('sanyinjiao', 'douyin', 'title')).every(([, v]) => v === 0), '三阴交其他账号均为 0');
 await open(A.page, 'zusanli');
 before = await snapshot();
-await click(A.page, 'title:wx-video');
+await click(A.page, 'title:video/g1');
 after = await snapshot();
 ok(same(diff(before, after), { [id('zusanli', 'wx-video', 'title')]: 1 }), '复制足三里标题1 只加足三里，三阴交标题1 仍为 ' + after[id('sanyinjiao', 'wx-video', 'title')]);
 
 console.log('7. 排序后复制仍对应正确文案');
 await open(B.page, 'sanyinjiao');
 // 让抖音描述 2 次、小红书描述 1 次，形成不同次数
-await click(B.page, 'description:douyin'); await B.page.waitForTimeout(2100);
+await click(B.page, 'description:video/g2'); await B.page.waitForTimeout(2100);
 await A.page.goto(`${BASE}/teacher/sanyinjiao/`); await A.page.waitForFunction(() => document.querySelector('.wb-stat.ready'));
-await click(A.page, 'description:douyin'); await click(A.page, 'description:xiaohongshu');
+await click(A.page, 'description:video/g2'); await click(A.page, 'description:video/g3');
 await open(B.page, 'sanyinjiao');
-await B.page.selectOption('[data-sort-select="description"]', 't-desc');
-const order = await B.page.$$eval('[data-rows="description"] > .wb-row', (rs) => rs.map((r) => ({ acc: r.dataset.account, t: Number(r.dataset.t) })));
-ok(order[0].acc === 'douyin' && order.every((r, i) => i === 0 || r.t <= order[i - 1].t), '“累计多→少”排序正确：' + order.map((r) => `${r.acc}=${r.t}`).join(' '));
+const cardSums = (pg) => pg.$$eval('[data-cards="video"] > .wb-card', (cs) => cs.map((c) => ({ v: c.dataset.variant, idx: c.dataset.index, t: c.dataset.members.split(' ').reduce((n, id) => n + Number(document.querySelector(`.wb-stat[data-stat-for="${id}"] [data-t]`)?.textContent || 0), 0) })));
+ok((await B.page.inputValue('[data-sort-select="video"]')) === 't-asc', '默认排序为“复制少的在前”');
+let order = await cardSums(B.page);
+ok(order.every((r, i) => i === 0 || r.t >= order[i - 1].t), '默认“复制少的在前”排序正确：' + order.map((r) => `${r.v}=${r.t}`).join(' '));
+await B.page.selectOption('[data-sort-select="video"]', 't-desc');
+order = await cardSums(B.page);
+ok(order.every((r, i) => i === 0 || r.t <= order[i - 1].t), '“复制多的在前”排序正确：' + order.map((r) => `${r.v}=${r.t}`).join(' '));
 const copyMap = JSON.parse(await B.page.locator('#copy-data').textContent());
-const aligned = await B.page.$$eval('[data-rows="description"] > .wb-row', (rs) => rs.map((r) => ({ acc: r.dataset.account, item: r.dataset.itemId, btnItem: r.querySelector('button').dataset.itemId, btnKey: r.querySelector('button').dataset.copyKey, text: r.querySelector('.wb-text').textContent })));
-ok(aligned.every((r) => r.btnKey === `description:${r.acc}` && r.item === r.btnItem && r.item.includes(`:${r.acc}:description:`) && r.text === copyMap[r.btnKey]), '排序后每行的账号、文字、按钮、内容编号仍一一对应');
-// 复制排序后的第 3 行
-const third = aligned[2];
+const aligned = await B.page.$$eval('[data-cards="video"] > .wb-card', (cs) => cs.flatMap((c) => [...c.querySelectorAll('.wb-row')].map((r) => ({ v: c.dataset.variant, item: r.dataset.itemId, btnItem: r.querySelector('button').dataset.itemId, btnKey: r.querySelector('button').dataset.copyKey, text: r.querySelector('.wb-text').textContent }))));
+ok(aligned.every((r) => r.btnKey.endsWith(`:video/${r.v}`) && r.item === r.btnItem && r.item.includes(`:video:${r.v}:`) && r.text === copyMap[r.btnKey]), '排序后每组的文字、按钮、内容编号仍一一对应');
+// 复制排序后第 3 组的描述
+const third = await B.page.locator('[data-cards="video"] > .wb-card').nth(2).getAttribute('data-variant');
+const thirdBtn = B.page.locator('[data-cards="video"] > .wb-card').nth(2).locator('[data-copy-key^="description:"]');
+const thirdItem = await thirdBtn.getAttribute('data-item-id');
 before = await snapshot();
-await B.page.locator('[data-rows="description"] > .wb-row').nth(2).locator('button').click();
+await thirdBtn.click();
 await B.page.waitForFunction(() => !document.querySelector('[data-busy]'));
 const clip = await B.page.evaluate(() => navigator.clipboard.readText());
 after = await snapshot();
-ok(clip === copyMap[`description:${third.acc}`], `排序后第 3 行复制到的是 ${third.acc} 的描述`);
-ok(same(diff(before, after), { [third.item]: 1 }), '且只给该条计数');
-await B.page.selectOption('[data-sort-select="description"]', 'd7-asc');
-const asc = await B.page.$$eval('[data-rows="description"] > .wb-row', (rs) => rs.map((r) => Number(r.dataset.d7)));
-ok(asc.every((v, i) => i === 0 || v >= asc[i - 1]), '“近7天少→多”排序正确');
-await B.page.click('[data-sort-reset="description"]');
-const def = await B.page.$$eval('[data-rows="description"] > .wb-row', (rs) => rs.map((r) => r.dataset.index).join(''));
-ok(def === '012345' && (await B.page.inputValue('[data-sort-select="description"]')) === 'default', '“恢复默认”回到账号 1—6 顺序');
-for (const g of ['title', 'keywords']) ok(await B.page.locator(`[data-sort-select="${g}"]`).count() === 1, `${g} 区域也有排序`);
+ok(clip === copyMap[`description:video/${third}`], `排序后第 3 组复制到的是 ${third} 的描述`);
+ok(same(diff(before, after), { [thirdItem]: 1 }), '且只给该条计数');
+await B.page.selectOption('[data-sort-select="video"]', 'index');
+const def = await B.page.$$eval('[data-cards="video"] > .wb-card', (cs) => cs.map((c) => c.dataset.index).join(''));
+ok(def === '123456', '“按编号”回到 1、2、3…… 顺序：' + def);
 
 console.log('8. 复制失败不增加次数');
 before = await snapshot();
 await B.page.evaluate(() => { window.__forceManualCopy = true; });
-await B.page.locator('[data-copy-key="title:xiaohongshu"]').click();
+await B.page.locator('[data-copy-key="title:video/g3"]').click();
 await B.page.waitForTimeout(500);
 ok(await B.page.locator('.manual-dialog.open').isVisible(), '弹出手动复制框');
 after = await snapshot();
@@ -134,44 +135,44 @@ await B.page.evaluate(() => { window.__forceManualCopy = false; });
 
 console.log('9. 连续误触不重复计数');
 before = await snapshot();
-await B.page.evaluate(() => { const b = document.querySelector('[data-copy-key="keywords:douyin"]'); for (let i = 0; i < 6; i++) b.click(); });
+await B.page.evaluate(() => { const b = document.querySelector('[data-copy-key="keywords:video/g2"]'); for (let i = 0; i < 6; i++) b.click(); });
 await B.page.waitForTimeout(800);
-await B.page.locator('[data-copy-key="keywords:douyin"]').click(); // 0.8 秒后再点
+await B.page.locator('[data-copy-key="keywords:video/g2"]').click(); // 0.8 秒后再点
 await B.page.waitForFunction(() => !document.querySelector('[data-busy]'));
 await B.page.waitForTimeout(2200);
-await B.page.locator('[data-copy-key="keywords:douyin"]').click(); // 3 秒后（服务器 10 秒去重）
+await B.page.locator('[data-copy-key="keywords:video/g2"]').click(); // 3 秒后（服务器 10 秒去重）
 await B.page.waitForFunction(() => !document.querySelector('[data-busy]'));
 after = await snapshot();
 ok(same(diff(before, after), { [id('sanyinjiao', 'douyin', 'keywords')]: 1 }), '6 次连点 + 两次补点（10 秒内）只计 1 次');
 
 console.log('10. 整组复制按规则计数');
 before = await snapshot();
-await click(B.page, 'account:ding-device');
+await click(B.page, 'group:video/g6');
 after = await snapshot();
-const exp = {}; for (const t of ['account_bundle', 'title', 'description', 'keywords', 'hashtags']) exp[id('sanyinjiao', 'ding-device', t)] = 1;
+const exp = {}; for (const t of ['account_bundle', 'title', 'description', 'keywords']) exp[id('sanyinjiao', 'ding-device', t)] = 1;
 ok(same(diff(before, after), exp), '单账号整组：整组 +1，该账号标题/描述/关键词/标签各 +1，其他不变');
 ok((await statText(B.page, id('sanyinjiao', 'ding-device', 'account_bundle'))) === '1' && (await statText(B.page, id('sanyinjiao', 'ding-device', 'title'))) === '1', '页面上整组与单条数字分别显示并更新');
 before = after;
-await click(B.page, 'all');
+await click(B.page, 'set:video');
 after = await snapshot();
 ok(same(diff(before, after), { [id('sanyinjiao', '_all', 'all_bundle')]: 1 }), '全部六组：只记一次整批，不计入任何单条或账号整组');
 const adm = await (await fetch(`${BASE}/api/admin/stats`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json();
 const bt = (t) => adm.batches.filter((b) => b.batch_type === t && b.acupoint === 'sanyinjiao').reduce((n, b) => n + b.n, 0);
-ok(bt('account') === 1 && bt('all') === 1, '整批记录表（copy_batch_stats）分别保存了 1 次单账号整组、1 次全部六组');
+ok(bt('group') === 1 && bt('all') === 1, '整批记录表（copy_batch_stats）分别保存了 1 次单账号整组、1 次全部六组');
 
 console.log('11. 数据库/网络失败时不虚假显示成功，之后重试不重复计数');
 const iid = id('sanyinjiao', 'other-teacher', 'title');
 await B.page.route('**/api/copy', (r) => r.fulfill({ status: 500, contentType: 'application/json', body: '{"ok":false,"error":"server_error"}' }));
 before = await snapshot();
-await click(B.page, 'title:other-teacher');
+await click(B.page, 'title:video/g5');
 ok((await B.page.locator('.toast').textContent()) === '文案已复制，统计暂未同步。', '提示“文案已复制，统计暂未同步。”');
-ok((await B.page.evaluate(() => navigator.clipboard.readText())) === copyMap['title:other-teacher'], '文字仍然复制成功');
+ok((await B.page.evaluate(() => navigator.clipboard.readText())) === copyMap['title:video/g5'], '文字仍然复制成功');
 ok((await statText(B.page, iid)) === '0', '页面数字没有虚假增加');
 ok(same(diff(before, await snapshot()), {}), '数据库没有计数');
 await B.page.unroute('**/api/copy');
 await B.page.route('**/api/copy', (r) => r.abort('internetdisconnected'));
 await B.page.waitForTimeout(2100);
-await click(B.page, 'title:other-teacher');
+await click(B.page, 'title:video/g5');
 ok((await B.page.locator('.toast').textContent()) === '文案已复制，统计暂未同步。', '断网时同样提示，未计数');
 await B.page.unroute('**/api/copy');
 const pend = await B.page.evaluate(() => JSON.parse(localStorage.getItem('stl_pending_events') || '[]'));
@@ -194,19 +195,19 @@ ok(re.status === 'duplicate' && same(diff(before, await snapshot()), { [iid]: 1 
   let n = 0; const orig = sdb._exec.bind(sdb);
   sdb._exec = (s) => { if (++n === 4) throw new Error('模拟数据库写入失败'); return orig(s); };
   const ce = console.error; console.error = () => {};
-  const res = await handleApi(new Request('http://x/api/copy', { method: 'POST', body: JSON.stringify({ event_id: 'evt-fail-0001', item_id: 'houxi:douyin:account_bundle:a:v1', client: 'c' }) }), { db: sdb, env: {}, ip: '1' });
+  const res = await handleApi(new Request('http://x/api/copy', { method: 'POST', body: JSON.stringify({ event_id: 'evt-fail-0001', item_id: 'yanglingquan:video:g2:group_bundle:v1', client: 'c' }) }), { db: sdb, env: {}, ip: '1' });
   console.error = ce;
   const rows = sdb.raw.prepare('SELECT COUNT(*) AS n FROM copy_stats').get().n + sdb.raw.prepare('SELECT COUNT(*) AS n FROM copy_events').get().n;
   ok(res.status === 500 && rows === 0, '服务器端写入中途失败：返回 500，且事务回滚、没有半截计数');
   sdb._exec = orig;
-  const res2 = await handleApi(new Request('http://x/api/copy', { method: 'POST', body: JSON.stringify({ event_id: 'evt-fail-0001', item_id: 'houxi:douyin:account_bundle:a:v1', client: 'c' }) }), { db: sdb, env: {}, ip: '1' });
+  const res2 = await handleApi(new Request('http://x/api/copy', { method: 'POST', body: JSON.stringify({ event_id: 'evt-fail-0001', item_id: 'yanglingquan:video:g2:group_bundle:v1', client: 'c' }) }), { db: sdb, env: {}, ip: '1' });
   const j2 = await res2.json();
-  ok(j2.status === 'counted' && j2.stats['houxi:douyin:account_bundle:a:v1'].t === 1, '恢复后用同一事件编号重试 → 正常计 1 次');
+  ok(j2.status === 'counted' && j2.stats['yanglingquan:video:g2:group_bundle:v1'].t === 1, '恢复后用同一事件编号重试 → 正常计 1 次');
 }
 
 console.log('12. 多个老师同时操作（两个服务进程共用同一数据库，并发 400 次）');
-const hot = id('houxi', 'xiaohongshu', 'title');
-const bund = id('houxi', 'wx-video', 'account_bundle');
+const hot = id('yanglingquan', 'xiaohongshu', 'title');
+const bund = id('yanglingquan', 'wx-video', 'account_bundle');
 const tasks = [];
 for (let i = 0; i < 400; i++) {
   const base = i % 2 ? s1.url : s2.url;
@@ -216,20 +217,20 @@ for (let i = 0; i < 400; i++) {
 const results = await Promise.all(tasks);
 const after12 = await snapshot();
 ok(results.every((r) => r.ok && r.status === 'counted'), '400 个并发请求全部成功');
-ok(after12[hot] === 300 && after12[bund] === 100 && after12[id('houxi', 'wx-video', 'title')] === 100, `累加无丢失：小红书标题=${after12[hot]}（应300），视频号整组=${after12[bund]}（应100），其成员标题=${after12[id('houxi', 'wx-video', 'title')]}（应100）`);
+ok(after12[hot] === 300 && after12[bund] === 100 && after12[id('yanglingquan', 'wx-video', 'title')] === 100, `累加无丢失：小红书标题=${after12[hot]}（应300），视频号整组=${after12[bund]}（应100），其成员标题=${after12[id('yanglingquan', 'wx-video', 'title')]}（应100）`);
 
 console.log('13. 手机端复制和统计');
 for (const vp of [{ width: 360, height: 740 }, { width: 390, height: 844 }]) {
   const M = await teacher({ viewport: vp, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.40' });
-  await open(M.page, 'houxi');
+  await open(M.page, 'yanglingquan');
   const over = await M.page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   const outside = await M.page.evaluate(() => [...document.querySelectorAll('[data-copy-key], .wb-stat, [data-sort-select], [data-sort-reset]')].filter((el) => { const r = el.getBoundingClientRect(); return r.width && (r.right > window.innerWidth + 1 || r.left < -1); }).length);
   ok(over <= 1 && outside === 0, `${vp.width}px：无横向滚动，按钮/统计/排序控件都在屏幕内`);
   const small = await M.page.evaluate(() => [...document.querySelectorAll('[data-copy-key]')].filter((b) => b.getBoundingClientRect().height < 36).length);
   ok(small === 0, `${vp.width}px：复制按钮高度足够点按`);
-  const it = id('houxi', 'douyin', 'description');
+  const it = id('yanglingquan', 'douyin', 'description');
   const b0 = Number(await statText(M.page, it));
-  await M.page.locator('[data-copy-key="description:douyin"]').tap();
+  await M.page.locator('[data-copy-key="description:video/g2"]').tap();
   await M.page.waitForFunction(() => !document.querySelector('[data-busy]'));
   ok(Number(await statText(M.page, it)) === b0 + 1, `${vp.width}px：点按复制后数字 +1`);
   await M.page.screenshot({ path: `/tmp/stats-mobile-${vp.width}.png` });
@@ -263,11 +264,11 @@ ok(!realToken || (!distJs.includes(realToken) && !adminHtml.includes(realToken))
   await P.page.fill('#token', TOKEN); await P.page.click('#login button');
   await P.page.waitForSelector('#dash:not([hidden])');
   const text = await P.page.textContent('#out');
-  ok(['全部穴位累计复制情况', '六个账号的内容复制情况', '标题复制排行', '描述复制排行', '关键词复制排行', '最近7天热门内容', '最近7天较少使用的内容', '最近30天复制趋势'].every((s) => text.includes(s)), '管理页显示全部要求的板块');
-  await P.page.selectOption('#f select[name=point]', 'houxi');
+  ok(['全部穴位累计复制情况', '各组文案的复制情况', '标题复制排行', '描述复制排行', '关键词复制排行', '最近7天热门内容', '最近7天较少使用的内容', '最近30天复制趋势'].every((s) => text.includes(s)), '管理页显示全部要求的板块');
+  await P.page.selectOption('#f select[name=point]', 'yanglingquan');
   await P.page.selectOption('#f select[name=type]', 'title');
   const t2 = await P.page.textContent('#out');
-  ok(t2.includes('标题复制排行') && !t2.includes('描述复制排行') && t2.includes('后溪穴'), '管理页按穴位/类型筛选生效');
+  ok(t2.includes('标题复制排行') && !t2.includes('描述复制排行') && t2.includes('阳陵泉穴'), '管理页按穴位/类型筛选生效');
   ok(!/老师[A-Z]|client-/.test(t2), '管理页没有任何个人/浏览器标识');
   await P.page.screenshot({ path: '/tmp/stats-admin.png', fullPage: false });
   await P.ctx.close();
@@ -279,16 +280,16 @@ ok(!realToken || (!distJs.includes(realToken) && !adminHtml.includes(realToken))
   await applySchema(vdb, fs.readFileSync(new URL('../api/schema.sql', import.meta.url), 'utf8'));
   const m = buildManifest();
   await syncManifest(vdb, m);
-  const tid = 'houxi:douyin:title:a:v1';
+  const tid = 'yanglingquan:video:g2:title:v1';
   await handleApi(new Request('http://x/api/copy', { method: 'POST', body: JSON.stringify({ event_id: 'evt-ver-0001', item_id: tid, client: 'c' }) }), { db: vdb, env: {}, ip: '1' });
   const m2 = structuredClone(m); m2.items.find((i) => i.id === tid).hash = 'changed1';
   await syncManifest(vdb, m2);
   let r = vdb.raw.prepare('SELECT i.content_hash != i.original_hash AS edited, s.total FROM copy_items i JOIN copy_stats s ON s.item_id = i.id WHERE i.id = ?').get(tid);
   ok(r.edited === 1 && r.total === 1, '小修改（版本号不变）：沿用原统计，并标记“有小修改”');
-  const m3 = structuredClone(m); const it = m3.items.find((i) => i.id === tid); it.id = 'houxi:douyin:title:a:v2'; it.version = 2;
+  const m3 = structuredClone(m); const it = m3.items.find((i) => i.id === tid); it.id = 'yanglingquan:video:g2:title:v2'; it.version = 2;
   await syncManifest(vdb, m3);
   const old = vdb.raw.prepare('SELECT active FROM copy_items WHERE id = ?').get(tid);
-  const nw = vdb.raw.prepare('SELECT COALESCE((SELECT total FROM copy_stats WHERE item_id = ?), 0) AS t').get('houxi:douyin:title:a:v2');
+  const nw = vdb.raw.prepare('SELECT COALESCE((SELECT total FROM copy_stats WHERE item_id = ?), 0) AS t').get('yanglingquan:video:g2:title:v2');
   ok(old.active === 0 && nw.t === 0, '新内容版本（版本号 +1）：新编号从 0 计数，旧版本保留为历史');
 }
 

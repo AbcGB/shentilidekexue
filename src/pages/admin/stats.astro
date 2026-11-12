@@ -1,13 +1,23 @@
 ---
 // 管理员统计页。页面本身不含任何统计数据和口令；输入口令后由浏览器向统计接口请求数据，口令只在服务器端校验。
 import Base from '../../layouts/Base.astro';
-import { site, accountSettings, getAcupointsOrdered } from '../../lib/data';
-import { sortedAccounts } from '../../lib/copy-core.mjs';
+import { site, getAcupointsOrdered } from '../../lib/data';
+import { getSets } from '../../lib/copy-core.mjs';
 import { u } from '../../lib/url';
+const pts = getAcupointsOrdered();
+const setKinds: Record<string, string> = {};
+const variants: Record<string, string> = {};
+const variantOrder: string[] = [];
+for (const p of pts) for (const s of getSets(p)) {
+  if (!setKinds[s.id]) setKinds[s.id] = s.id === 'video' ? '穴位科普视频' : s.id === 'device-demo' ? '设备演示视频' : s.id;
+  for (const v of s.variants) { const k = `${p.slug}:${s.id}:${v.id}`; variants[k] = `第 ${v.no} 组 · ${v.angle}`; variantOrder.push(k); }
+}
 const cfg = {
   apiBase: site.stats?.apiBase || '/api',
-  accounts: Object.fromEntries(sortedAccounts(accountSettings).map((a: any) => [a.id, a.name])),
-  accountOrder: sortedAccounts(accountSettings).map((a: any) => a.id),
+  sets: setKinds,
+  setOrder: Object.keys(setKinds),
+  variants,
+  variantOrder,
   points: Object.fromEntries(getAcupointsOrdered().map((p: any) => [p.slug, p.displayName])),
   pointOrder: getAcupointsOrdered().map((p: any) => p.slug),
 };
@@ -33,8 +43,8 @@ const cfg = {
       </div>
       <form class="filters" id="f" onsubmit="return false">
         <label>穴位<select name="point"><option value="">全部穴位</option></select></label>
-        <label>账号<select name="account"><option value="">全部账号</option></select></label>
-        <label>内容类型<select name="type"><option value="">全部类型</option><option value="title">标题</option><option value="description">描述</option><option value="keywords">关键词</option><option value="hashtags">话题标签</option><option value="account_bundle">单账号整组</option><option value="all_bundle">全部六组</option></select></label>
+        <label>视频<select name="account"><option value="">全部视频</option></select></label>
+        <label>内容类型<select name="type"><option value="">全部类型</option><option value="title">标题</option><option value="description">描述</option><option value="keywords">关键词</option><option value="hashtags">话题标签</option><option value="group_bundle">整组</option><option value="set_bundle">全部 N 组</option></select></label>
         <label>版本<select name="active"><option value="1">仅当前版本</option><option value="">含历史版本</option></select></label>
       </form>
       <div id="out"></div>
@@ -43,7 +53,7 @@ const cfg = {
   <script type="application/json" id="admin-config" set:html={JSON.stringify(cfg)} />
   <script>
     const cfg = JSON.parse(document.getElementById('admin-config')!.textContent!);
-    const T: Record<string, string> = { title: '标题', description: '描述', keywords: '关键词', hashtags: '话题标签', account_bundle: '单账号整组', all_bundle: '全部六组' };
+    const T: Record<string, string> = { title: '标题', description: '描述', keywords: '关键词', hashtags: '话题标签', group_bundle: '整组', set_bundle: '全部 N 组', account_bundle: '整组（旧）', all_bundle: '全部（旧）' };
     const api = (p: string) => cfg.apiBase.replace(/\/$/, '') + p;
     const $ = (s: string) => document.querySelector(s) as HTMLElement;
     const esc = (s: any) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -52,7 +62,7 @@ const cfg = {
 
     const fsel = $('#f') as HTMLFormElement;
     for (const s of cfg.pointOrder) (fsel.point as HTMLSelectElement).add(new Option(cfg.points[s], s));
-    for (const a of cfg.accountOrder) (fsel.account as HTMLSelectElement).add(new Option(cfg.accounts[a], a));
+    for (const a of cfg.setOrder) (fsel.account as HTMLSelectElement).add(new Option(cfg.sets[a], a));
 
     async function load() {
       const res = await fetch(api('/admin/stats'), { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }).catch(() => null);
@@ -76,7 +86,7 @@ const cfg = {
     fsel.addEventListener('change', render);
     if (token) load();
 
-    const name = (it: any) => `${cfg.points[it.acupoint] || it.acupoint} · ${it.account_id === '_all' ? '全部账号' : (cfg.accounts[it.account_id] || it.account_id)} · ${T[it.content_type] || it.content_type}${it.variant !== 'a' ? ' ' + it.variant.toUpperCase() : ''} v${it.version}${it.active ? '' : '（历史版本）'}${it.edited ? '（有小修改）' : ''}`;
+    const name = (it: any) => `${cfg.points[it.acupoint] || it.acupoint} · ${cfg.sets[it.account_id] || it.account_id} · ${it.variant === '_all' ? '全部组' : (cfg.variants[`${it.acupoint}:${it.account_id}:${it.variant}`] || it.variant)} · ${T[it.content_type] || it.content_type} v${it.version}${it.active ? '' : '（历史版本）'}${it.edited ? '（有小修改）' : ''}`;
     function table(rows: any[], cols: [string, (r: any) => any][]) {
       if (!rows.length) return '<p class="muted small">暂无数据</p>';
       return `<div class="table-wrap"><table><thead><tr>${cols.map((c) => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td>${c[1](r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
@@ -95,18 +105,19 @@ const cfg = {
       html += '<h2>全部穴位累计复制情况</h2>';
       html += table(cfg.pointOrder.filter((s: string) => !v('point') || s === v('point')).map((s: string) => {
         const its = singles.filter((i: any) => i.acupoint === s);
-        const acc = items.filter((i: any) => i.acupoint === s && i.content_type === 'account_bundle');
-        const all = items.filter((i: any) => i.acupoint === s && i.content_type === 'all_bundle');
+        const acc = items.filter((i: any) => i.acupoint === s && i.content_type === 'group_bundle');
+        const all = items.filter((i: any) => i.acupoint === s && i.content_type === 'set_bundle');
         return { s, t: sum(its, 't'), d7: sum(its, 'd7'), d30: sum(its, 'd30'), acc: sum(acc, 't'), all: sum(all, 't') };
-      }), [['穴位', (r) => esc(cfg.points[r.s])], ['单条复制累计', (r) => r.t], ['近7天', (r) => r.d7], ['近30天', (r) => r.d30], ['单账号整组', (r) => r.acc], ['全部六组（整批）', (r) => r.all]]);
-      html += '<p class="small muted">“单条复制累计”包含单条复制，以及单账号整组复制时各单条的计数；“全部六组”只单独记整批次数，不计入单条。</p>';
-      // 六账号
-      html += '<h2>六个账号的内容复制情况</h2>';
-      html += table(cfg.accountOrder.filter((a: string) => !v('account') || a === v('account')).map((a: string) => {
-        const its = singles.filter((i: any) => i.account_id === a);
+      }), [['穴位', (r) => esc(cfg.points[r.s])], ['单条复制累计', (r) => r.t], ['近7天', (r) => r.d7], ['近30天', (r) => r.d30], ['整组', (r) => r.acc], ['全部 N 组（整批）', (r) => r.all]]);
+      html += '<p class="small muted">“单条复制累计”包含单条复制，以及整组复制时各单条的计数；“全部 N 组”只单独记整批次数，不计入单条。</p>';
+      // 各组文案
+      html += '<h2>各组文案的复制情况</h2>';
+      html += table(cfg.variantOrder.filter((k: string) => { const [pt, st] = k.split(':'); return (!v('point') || pt === v('point')) && (!v('account') || st === v('account')); }).map((k: string) => {
+        const [pt, st, vid] = k.split(':');
+        const its = singles.filter((i: any) => i.acupoint === pt && i.account_id === st && i.variant === vid);
         const by = (t: string) => sum(its.filter((i: any) => i.content_type === t), 't');
-        return { a, title: by('title'), description: by('description'), keywords: by('keywords'), hashtags: by('hashtags'), bundle: sum(items.filter((i: any) => i.account_id === a && i.content_type === 'account_bundle'), 't'), d7: sum(its, 'd7') };
-      }), [['账号', (r) => esc(cfg.accounts[r.a])], ['标题', (r) => r.title], ['描述', (r) => r.description], ['关键词', (r) => r.keywords], ['话题标签', (r) => r.hashtags], ['整组', (r) => r.bundle], ['单条近7天', (r) => r.d7]]);
+        return { k, pt, st, title: by('title'), description: by('description'), keywords: by('keywords'), hashtags: by('hashtags'), bundle: sum(items.filter((i: any) => i.acupoint === pt && i.account_id === st && i.variant === vid && i.content_type === 'group_bundle'), 't'), d7: sum(its, 'd7') };
+      }), [['穴位 · 视频', (r) => `${esc(cfg.points[r.pt])} · ${esc(cfg.sets[r.st])}`], ['组', (r) => esc(cfg.variants[r.k])], ['标题', (r) => r.title], ['描述', (r) => r.description], ['关键词', (r) => r.keywords], ['话题标签', (r) => r.hashtags], ['整组', (r) => r.bundle], ['单条近7天', (r) => r.d7]]);
       // 排行
       for (const t of ['title', 'description', 'keywords']) {
         if (v('type') && v('type') !== t) continue;
@@ -127,7 +138,7 @@ const cfg = {
       for (const d of data.daily) if (!typeFilter || d.type === typeFilter) per[d.day] = (per[d.day] || 0) + Number(d.n);
       const max = Math.max(1, ...days.map((d) => per[d] || 0));
       html += `<div class="trend">${days.map((d) => `<div class="bar" title="${d}：${per[d] || 0} 次"><span style="height:${Math.round(((per[d] || 0) / max) * 100)}%"></span><em>${d.slice(8)}</em></div>`).join('')}</div>`;
-      html += '<p class="small muted">按天汇总全部复制操作（含单条、整组成员和整批），可用上方“内容类型”筛选；不受穴位/账号筛选影响。</p>';
+      html += '<p class="small muted">按天汇总全部复制操作（含单条、整组成员和整批），可用上方“内容类型”筛选；不受穴位/视频筛选影响。</p>';
       html += '<h2>全部明细</h2>' + table(items.slice().sort((a: any, b: any) => cfg.pointOrder.indexOf(a.acupoint) - cfg.pointOrder.indexOf(b.acupoint) || a.id.localeCompare(b.id)), itemCols);
       $('#out').innerHTML = html;
     }

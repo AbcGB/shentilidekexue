@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildCopyMap, alignCopies, keywordsText, hashtagsText } from '../src/lib/copy-core.mjs';
+import { buildCopyMap, getSets, variantKey, keywordsText, hashtagsText } from '../src/lib/copy-core.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -13,7 +13,7 @@ import { startServer } from './test-server.mjs';
 let server = null;
 if (!process.env.TEST_URL) server = await startServer({ port: 4399, env: { RATE_LIMIT_PER_MIN: '100000' } });
 const BASE = process.env.TEST_URL || server.url;
-const settings = JSON.parse(fs.readFileSync(path.join(root, 'src/content/accounts/account-settings.json'), 'utf8'));
+const settings = JSON.parse(fs.readFileSync(path.join(root, 'src/content/copy-settings.json'), 'utf8'));
 const points = fs.readdirSync(path.join(root, 'src/content/acupoints')).map((f) => JSON.parse(fs.readFileSync(path.join(root, 'src/content/acupoints', f), 'utf8')));
 let pass = 0, fail = 0;
 const ok = (cond, msg) => { if (cond) { pass++; } else { fail++; console.error('  ✗ ' + msg); } };
@@ -22,9 +22,13 @@ const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&qu
 const meta = (html, re) => { const m = html.match(re); return m ? decode(m[1]) : null; };
 
 console.log('A. 页面是否全部生成');
-const pages = ['admin/stats/index.html', 'index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
+const pages = ['admin/stats/index.html', 'index.html', 'xuexi/index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
 const slugs = ['zusanli', 'yanglingquan', 'sanyinjiao', 'waiguan', 'houxi', 'shenmen'];
-for (const s of slugs) pages.push(`xuewei/${s}/index.html`, `teacher/${s}/index.html`);
+const wbSlugs = ['zusanli', 'yanglingquan', 'sanyinjiao']; // 已录入负责人原文的穴位
+for (const s of slugs) pages.push(`xuewei/${s}/index.html`);
+for (const s of wbSlugs) pages.push(`teacher/${s}/index.html`);
+for (const s of slugs.filter((x) => !wbSlugs.includes(x))) ok(!fs.existsSync(path.join(dist, `teacher/${s}/index.html`)), `${s} 没有负责人文案，不应生成工作台页面`);
+for (const f of fs.readdirSync(path.join(root, 'src/content/lessons'))) { const m = fs.readFileSync(path.join(root, 'src/content/lessons', f), 'utf8').match(/slug: "([^"]+)"/); pages.push(`xuexi/${m[1]}/index.html`); }
 for (const p of pages) ok(fs.existsSync(path.join(dist, p)), `缺少页面 ${p}`);
 
 console.log('E. SEO 检查');
@@ -50,7 +54,7 @@ for (const s of slugs) {
   for (const img of html.match(/<img [^>]*>/g) || []) ok(/alt="[^"]+"/.test(img), `${s} 图片缺少 alt: ${img}`);
   ok((html.match(/href="\/xuewei\/[a-z]+\/"/g) || []).length >= 3, `${s} 内部链接过少`);
 }
-for (const s of ['admin/stats/index.html', 'teacher/index.html', ...slugs.map((s) => `teacher/${s}/index.html`)]) {
+for (const s of ['admin/stats/index.html', 'teacher/index.html', ...wbSlugs.map((s) => `teacher/${s}/index.html`)]) {
   ok(read(s).includes('<meta name="robots" content="noindex, nofollow">'), `${s} 未设置 noindex`);
 }
 const sitemap = read('sitemap.xml');
@@ -61,41 +65,35 @@ const locs = sitemap.match(/<loc>[^<]+<\/loc>/g) || [];
 ok(new Set(locs).size === locs.length, 'sitemap 有重复网址');
 ok(/Sitemap: https?:\/\/.+\/sitemap\.xml/.test(read('robots.txt')), 'robots.txt 缺少 Sitemap');
 
-console.log('C. 六组文案数据对齐（静态）');
-for (const s of slugs) {
+console.log('C. 多组文案数据对齐（静态）');
+for (const s of wbSlugs) {
   const p = points.find((x) => x.slug === s);
   const html = read(`teacher/${s}/index.html`);
   const m = html.match(/<script type="application\/json" id="copy-data">([\s\S]*?)<\/script>/);
   ok(m, `${s} 缺少复制数据`); if (!m) continue;
   const map = JSON.parse(m[1]);
-  const expected = buildCopyMap(p, settings);
-  ok(JSON.stringify(map) === JSON.stringify(expected), `${s} 页面复制数据与源文件不一致`);
-  const rows = alignCopies(p, settings);
-  ok(rows.length === 6 && rows.every((r) => r.copy), `${s} 不是六组完整文案`);
-  for (const { account, copy } of rows) {
-    const id = account.id;
-    ok(map[`title:${id}`] === copy.title, `${s}/${id} 标题错位`);
-    ok(map[`description:${id}`] === copy.description, `${s}/${id} 描述错位`);
-    ok(map[`keywords:${id}`] === keywordsText(copy, settings), `${s}/${id} 关键词错位`);
-    const block = map[`account:${id}`];
-    ok(block.startsWith(`【${account.name}】`) && block.includes(copy.title) && block.includes(copy.description) && block.includes(keywordsText(copy, settings)) && block.includes(hashtagsText(copy, settings)), `${s}/${id} 账号整组内容不完整`);
-    // 其他账号的标题不能出现在本账号整组内容里
-    for (const o of rows) if (o.account.id !== id) ok(!block.includes(o.copy.title), `${s}/${id} 整组内容混入了 ${o.account.id} 的标题`);
-    const idx = map.all.indexOf(block);
-    ok(idx > 0, `${s}/${id} 未包含在“复制全部六组内容”中`);
-    // 页面显示文字与复制文字一致
-    for (const g of ['title', 'description', 'keywords', 'hashtags']) {
-      const re = new RegExp(`data-account="${id}"[\\s\\S]*?data-field="${g}"[^>]*>([\\s\\S]*?)</div>`);
-      const sec = html.split(`data-group="${g}"`)[1];
-      const mm = sec && sec.match(re);
-      ok(mm && decode(mm[1]) === map[`${g}:${id}`], `${s}/${id} 页面显示的${g}与复制内容不一致`);
+  ok(JSON.stringify(map) === JSON.stringify(buildCopyMap(p, settings)), `${s} 页面复制数据与源文件不一致`);
+  ok(!/视频号|抖音账号|小红书账号|微信公众号/.test(html.split('id="copy-data"')[0]), `${s} 工作台页面不应再出现平台账号名`);
+  const sets = getSets(p);
+  ok(sets.length >= 1 && sets[0].variants.length >= 1, `${s} 没有文案组`);
+  for (const set of sets) {
+    for (const v of set.variants) {
+      const k = variantKey(set.id, v.id);
+      ok(map[`title:${k}`] === v.title && map[`description:${k}`] === v.description && map[`keywords:${k}`] === keywordsText(v, settings), `${s}/${k} 文案错位`);
+      const block = map[`group:${k}`];
+      ok(block.startsWith(`【第 ${v.no} 组${v.angle ? `｜${v.angle}` : ''}】`) && block.includes(v.title) && block.includes(v.description) && block.includes(hashtagsText(v, settings)), `${s}/${k} 整组内容不完整`);
+      for (const o of set.variants) if (o.id !== v.id && o.title !== v.title) ok(!block.includes(o.title), `${s}/${k} 整组内容混入了 ${o.id} 的标题`);
+      ok(map[`set:${set.id}`].includes(block), `${s}/${k} 未包含在“复制全部 N 组”中`);
+      const card = html.split(`data-variant="${v.id}"`)[1] || '';
+      for (const g of ['title', 'description', 'keywords']) {
+        const mm = card.match(new RegExp(`data-field="${g}"[^>]*>([\\s\\S]*?)</div>`));
+        ok(mm && decode(mm[1]) === map[`${g}:${k}`], `${s}/${k} 页面显示的${g}与复制内容不一致`);
+      }
     }
   }
-  // 全部内容中账号顺序正确
-  const positions = rows.map((r) => map.all.indexOf(`【${r.account.name}】`));
-  ok(positions.every((v, i) => v > 0 && (i === 0 || v > positions[i - 1])), `${s} 全部内容账号顺序错误`);
-  ok(html.includes('AI 辅助起草'), `${s} 未提示 AI 起草需人工确认`);
-  ok(p.wechatArticle?.body ? html.includes('复制正文') : html.includes('待制作'), `${s} 公众号正文状态显示错误`);
+  ok(html.includes('原文录入'), `${s} 未说明文案为负责人原文`);
+  ok(p.longCopy?.showInWorkbench ? html.includes('长文案（可选）') : !html.includes('长文案（可选）'), `${s} 长文案显示错误`);
+  ok(sets[0].variants.length === 6 && sets[0].variants.map((v) => v.no).join('') === '123456', `${s} 应为编号 1—6 的 6 组`);
 }
 
 console.log('B/C/D. 浏览器测试');
@@ -123,34 +121,35 @@ if (chromium && chromePath) {
   await page.goto(BASE + '/search/?q=神门');
   ok((await page.locator('.search-results li').count()) > 0, '搜索页 ?q= 无结果');
   // 复制
-  for (const s of slugs) {
+  for (const s of wbSlugs) {
     await page.goto(BASE + `/teacher/${s}/`);
     const map = JSON.parse(await page.locator('#copy-data').textContent());
     const buttons = await page.locator('[data-copy-key]').all();
-    ok(buttons.length === 6 * 5 + 1 + (map['article:body'] ? 6 : 0), `${s} 复制按钮数量不对：${buttons.length}`);
+    ok(buttons.length === Object.keys(map).filter((k) => !(k.startsWith('hashtags:') && !map[k])).length, `${s} 复制按钮数量不对：${buttons.length}`);
     for (const btn of buttons) {
       const key = await btn.getAttribute('data-copy-key');
       await btn.click();
       const clip = await page.evaluate(() => navigator.clipboard.readText());
       ok(clip === map[key], `${s} 按钮 ${key} 复制内容不一致`);
     }
-    ok((await page.locator('.toast').textContent()) === '复制成功！', `${s} 未显示“复制成功！”`);
+    const toastText = await page.locator('.toast').textContent();
+    ok(toastText.startsWith('复制成功！'), `${s} 未显示“复制成功！”：${toastText}`);
   }
   // 手动复制备用方式
-  await page.goto(BASE + '/teacher/houxi/');
+  await page.goto(BASE + '/teacher/yanglingquan/');
   await page.evaluate(() => { window.__forceManualCopy = true; });
-  await page.locator('[data-copy-key="account:douyin"]').click();
+  await page.locator('[data-copy-key="group:video/g2"]').click();
   ok(await page.locator('.manual-dialog.open').isVisible(), '复制失败时没有弹出手动复制框');
   const manual = await page.locator('.manual-dialog textarea').inputValue();
   const mapH = JSON.parse(await page.locator('#copy-data').textContent());
-  ok(manual === mapH['account:douyin'], '手动复制框内容不完整');
+  ok(manual === mapH['group:video/g2'], '手动复制框内容不完整');
   // 兼容方式（浏览器不支持剪贴板接口时，例如部分微信内置浏览器或非 HTTPS 页面）
-  await page.goto(BASE + '/teacher/waiguan/');
+  await page.goto(BASE + '/teacher/zusanli/');
   await page.evaluate(() => { Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true }); });
-  await page.locator('[data-copy-key="description:xiaohongshu"]').click();
+  await page.locator('[data-copy-key="description:video/g3"]').click();
   const legacy = await page.evaluate(() => window.__lastCopied);
   const mapW = JSON.parse(await page.locator('#copy-data').textContent());
-  ok(legacy && legacy.ok && legacy.text === mapW['description:xiaohongshu'], '兼容复制方式失败');
+  ok(legacy && legacy.ok && legacy.text === mapW['description:video/g3'], '兼容复制方式失败');
   ok(!(await page.locator('.manual-dialog.open').isVisible()), '兼容复制成功时不应弹出手动框');
   // 历史筛选
   await page.goto(BASE + '/learning/archive/');

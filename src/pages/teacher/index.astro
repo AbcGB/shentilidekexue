@@ -1,21 +1,31 @@
 ---
 import Base from '../../layouts/Base.astro';
 import ReviewBadge from '../../components/ReviewBadge.astro';
-import { getAcupointsOrdered, getLearning, latestDate, accountSettings } from '../../lib/data';
-import { sortedAccounts } from '../../lib/copy-core.mjs';
+import { getWorkbenchAcupoints, getAcupointsOrdered, getLearning, latestDate } from '../../lib/data';
+import { getSets } from '../../lib/copy-core.mjs';
 import { u } from '../../lib/url';
-const points = getAcupointsOrdered();
+const points = getWorkbenchAcupoints();
+const pending = getAcupointsOrdered().filter((p: any) => !points.includes(p));
+const wbSlugs = new Set(points.map((p: any) => p.slug));
 const latest = latestDate();
 const todays = getLearning().filter((e) => e.date === latest && e.type === '穴位视频');
-const accounts = sortedAccounts(accountSettings);
 ---
-<Base title="老师工作台：六账号发布文案" path="/teacher/" noindex description="内部使用的发布文案工作台。">
+<Base title="老师工作台：视频多组文案" path="/teacher/" noindex description="内部使用的发布文案工作台。">
   <div class="container">
     <div class="breadcrumb"><a href={u('/')}>首页</a> › 老师工作台</div>
     <h1>老师工作台</h1>
-    <p class="muted">打开当天的穴位 → 找到自己的账号 → 复制标题、描述、关键词 → 粘贴到平台发布 → 把链接或截图发到工作群。</p>
+    <p class="muted">打开当天的穴位 → 每条视频有 1、2、3…… 若干组文案 → 挑一组（尽量挑复制次数少的）→ 复制标题、描述或关键词 → 发布后把链接或截图发到工作群。</p>
     <p class="notice">本页为内部工作页面（已设置搜索引擎不收录），但没有登录保护，任何拿到链接的人都能看到。请不要在这里放患者资料、个人隐私或其他敏感内容。所有文案需人工确认后再发布。</p>
-    <p class="small muted">每条文案旁会显示全站共享的匿名复制次数（累计和近7天），方便挑选用得较少的版本；不记录是谁复制。<a href={u('/about/#privacy')}>隐私说明</a></p>
+    <p class="small muted">每条文案旁会显示全站共享的匿名复制次数（累计和近7天），默认把复制少的组排在前面；不记录是谁复制。<a href={u('/about/#privacy')}>隐私说明</a></p>
+    <details class="card small" style="margin:10px 0">
+      <summary><strong>为什么同一条视频要准备多组文案？（搜索与矩阵）</strong></summary>
+      <ul>
+        <li>每组的标题和关键词侧重点不同（例如“在哪里”“怎么找”“设备操作演示”）。不同老师发不同的组，平台上能覆盖更多人的搜索问法，而不是很多账号发同一句话。</li>
+        <li>关键词按负责人给的原文整串复制，不用再自己改。</li>
+        <li>尽量挑复制次数少的组；同一组被很多账号用了，平台容易判定为重复内容。</li>
+        <li>标题、描述里不要自行添加疗效说法；文案需负责人确认后再发布。</li>
+      </ul>
+    </details>
 
     <h2>今日需要发布 <span class="small muted">（{latest}）</span></h2>
     {todays.length > 0 ? (
@@ -24,13 +34,14 @@ const accounts = sortedAccounts(accountSettings);
           <li class="update-item">
             <div class="update-time">{e.time}</div>
             <div><div class="update-title">{e.title}</div><div class="update-meta"><span class="badge badge-gray">{e.publishStatus}</span><ReviewBadge status={e.reviewStatus} /></div></div>
-            <div>{e.acupoints?.[0] && <a class="btn" href={u(`/teacher/${e.acupoints[0]}/`)}>打开文案</a>}</div>
+            <div>{e.acupoints?.[0] && wbSlugs.has(e.acupoints[0]) && <a class="btn" href={u(`/teacher/${e.acupoints[0]}/`)}>打开文案</a>}</div>
           </li>
         ))}
       </ul>
     ) : <p class="placeholder">今天暂无指定的发布视频，可在下面选择穴位。</p>}
 
-    <h2>全部穴位文案</h2>
+    <h2>已录入文案的穴位</h2>
+    <p class="small muted">穴位会持续增加。负责人提供某个穴位的标题、描述、关键词后，录入到该穴位文件的 <code>copySets</code>，这里就会自动出现。</p>
     <label class="small muted" for="wb-filter">快速查找穴位</label>
     <input id="wb-filter" type="search" placeholder="输入穴位名称或拼音，例如：后溪 / houxi" style="width:100%;height:44px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-size:1rem;margin:4px 0 12px" />
     <div class="grid grid-3" id="wb-list">
@@ -38,21 +49,12 @@ const accounts = sortedAccounts(accountSettings);
         <a class="card point-card" href={u(`/teacher/${p.slug}/`)} data-filter={`${p.name} ${p.aliases.join(' ')} ${p.pinyin.replace(/\s/g, '')} ${p.pinyin.split(' ').map((s: string) => s[0]).join('')} ${p.meridian}`.toLowerCase()}>
           <h3>{p.displayName}</h3>
           <div class="meta">{p.meridian}</div>
-          <p>六组文案 · 更新 {p.updateDate}{p.wechatArticle?.body ? ' · 含公众号正文' : ' · 公众号正文待制作'}</p>
+          <p>{getSets(p)[0].variants.length} 组视频文案 · 更新 {p.updateDate}</p>
         </a>
       ))}
     </div>
+    {pending.length > 0 && <p class="small muted">以下穴位已有公开知识页，视频文案待负责人提供：{pending.map((p: any) => p.displayName).join('、')}。</p>}
 
-    <h2>账号与发布时间</h2>
-    <p class="small muted">以下账号名称和发布时间都可以由管理员在 <code>src/content/accounts/account-settings.json</code> 中修改。</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>序号</th><th>账号</th><th>平台</th><th>建议发布时间</th><th>说明</th></tr></thead>
-        <tbody>
-          {accounts.map((a: any, i: number) => <tr><td>{i + 1}</td><td>{a.name}</td><td>{a.platform}</td><td>{a.publishTimes.length ? a.publishTimes.join('、') : '待定'}</td><td>{a.note}</td></tr>)}
-        </tbody>
-      </table>
-    </div>
   </div>
   <script>
     const input = document.getElementById('wb-filter') as HTMLInputElement;

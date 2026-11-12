@@ -1,7 +1,8 @@
 ---
 import ReviewBadge from './ReviewBadge.astro';
 import { entryLink, u } from '../lib/url';
-import type { LearningEntry } from '../lib/data';
+import { getWorkbenchAcupoints, type LearningEntry } from '../lib/data';
+const wb = new Set(getWorkbenchAcupoints().map((p: any) => p.slug));
 interface Props { entries: LearningEntry[]; showDate?: boolean }
 const { entries, showDate = false } = Astro.props;
 ---
@@ -19,7 +20,7 @@ const { entries, showDate = false } = Astro.props;
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <a class="btn btn-outline" href={entryLink(e)}>查看详情</a>
-        {e.type === '穴位视频' && e.acupoints?.length === 1 && <a class="btn" href={u(`/teacher/${e.acupoints[0]}/`)}>复制文案</a>}
+        {e.type === '穴位视频' && e.acupoints?.length === 1 && wb.has(e.acupoints[0]) && <a class="btn" href={u(`/teacher/${e.acupoints[0]}/`)}>复制文案</a>}
       </div>
     </li>
   ))}

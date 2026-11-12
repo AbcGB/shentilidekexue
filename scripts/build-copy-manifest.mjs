@@ -3,21 +3,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildCopyItems, validateCopies } from '../src/lib/copy-core.mjs';
+import { buildCopyItems, hasWorkbenchCopies, getSets } from '../src/lib/copy-core.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 export function buildManifest() {
-  const settings = JSON.parse(fs.readFileSync(path.join(root, 'src/content/accounts/account-settings.json'), 'utf8'));
+  const settings = JSON.parse(fs.readFileSync(path.join(root, 'src/content/copy-settings.json'), 'utf8'));
   const dir = path.join(root, 'src/content/acupoints');
   const items = [];
+  const sets = {};
   for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.json')).sort()) {
     const p = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
-    if (p.publishStatus !== 'published' || validateCopies(p, settings).length) continue;
+    if (p.publishStatus !== 'published' || !hasWorkbenchCopies(p)) continue;
     items.push(...buildCopyItems(p, settings));
+    for (const s of getSets(p)) sets[`${p.slug}:${s.id}`] = s.label;
   }
-  const accounts = Object.fromEntries(settings.accounts.map((a) => [a.id, a.name]));
-  return { generatedAt: new Date().toISOString(), accounts, items };
+  return { generatedAt: new Date().toISOString(), sets, items };
 }
 
 const q = (s) => `'${String(s).replace(/'/g, "''")}'`;

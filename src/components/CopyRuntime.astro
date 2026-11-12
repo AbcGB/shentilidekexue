@@ -24,6 +24,7 @@
   const cfgEl = document.getElementById('stats-config');
   const cfg: { enabled: boolean; apiBase: string; acupoint: string } | null = cfgEl ? JSON.parse(cfgEl.textContent || 'null') : null;
   const statsOn = !!(cfg && cfg.enabled);
+  const itemStats: Record<string, Stat> = {};
   const api = (p: string) => (cfg?.apiBase || '/api').replace(/\/$/, '') + p;
   const toast = document.querySelector<HTMLElement>('.toast')!;
   const dialog = document.querySelector<HTMLElement>('.manual-dialog')!;
@@ -79,6 +80,7 @@
 
   function applyStats(stats: Record<string, Stat>) {
     for (const [id, s] of Object.entries(stats)) {
+      itemStats[id] = s;
       document.querySelectorAll<HTMLElement>(`[data-stat-for="${CSS.escape(id)}"]`).forEach((el) => {
         el.querySelector('[data-t]')!.textContent = String(s.t);
         el.querySelector('[data-d7]')!.textContent = String(s.d7);
@@ -109,13 +111,15 @@
       const { status, body } = await fetchJson(api(`/stats?acupoint=${encodeURIComponent(cfg!.acupoint)}`));
       if (status !== 200 || !body?.ok) throw new Error(String(status));
       applyStats(body.stats || {});
+      const first = !statsLoaded;
       statsLoaded = true;
       document.querySelectorAll<HTMLSelectElement>('[data-sort-select]').forEach((s) => (s.disabled = false));
-      setStatus('复制次数为全站老师共享的匿名统计（不记录是谁复制），可用来挑选使用较少的版本。');
+      if (first) resortAll(); // 默认把复制少的排在前面（复制后不自动跳动，避免老师点错位置）
+      setStatus('复制次数为全站老师共享的匿名统计（不记录是谁复制）。默认把复制少的组排在前面，可在“排列顺序”里切回编号顺序。');
     } catch {
       document.querySelectorAll('.wb-stat').forEach((el) => el.classList.add('na'));
       document.querySelectorAll<HTMLSelectElement>('[data-sort-select]').forEach((s) => (s.disabled = true));
-      setStatus('统计暂时无法读取（网络或统计服务不可用）。复制功能不受影响。', true);
+      setStatus('统计暂时无法读取（网络或统计服务不可用），以下按编号顺序排列。复制功能不受影响。', true);
     }
   }
 
@@ -187,26 +191,31 @@
     } finally { delete btn.dataset.busy; }
   });
 
-  // ───── 排序（只改变显示顺序；每行的文字、按钮、内容编号是一个整体，不会错位） ─────
-  function sortGroup(group: string, mode: string) {
-    const box = document.querySelector<HTMLElement>(`[data-rows="${group}"]`);
-    if (!box) return;
-    const rows = Array.from(box.querySelectorAll<HTMLElement>(':scope > .wb-row'));
-    const [field, dir] = mode === 'default' ? ['index', 'asc'] : mode.split('-');
-    const val = (r: HTMLElement) => Number(field === 'index' ? r.dataset.index : r.dataset[field] ?? 0);
-    rows.sort((a, b) => (dir === 'asc' ? val(a) - val(b) : val(b) - val(a)) || Number(a.dataset.index) - Number(b.dataset.index));
-    rows.forEach((r) => box.appendChild(r));
+  // ───── 排序（只改变每组卡片的显示顺序；卡片里的文字、按钮、内容编号是一个整体，不会错位） ─────
+  // 每组的“复制次数”= 该组标题、描述、关键词（及话题标签）的次数之和。
+  function cardVal(card: HTMLElement, field: 't' | 'd7') {
+    return (card.dataset.members || '').split(' ').filter(Boolean).reduce((n, id) => n + (itemStats[id]?.[field] ?? 0), 0);
   }
+  function sortCards(setId: string, mode: string) {
+    const box = document.querySelector<HTMLElement>(`[data-cards="${CSS.escape(setId)}"]`);
+    if (!box) return;
+    const cards = Array.from(box.querySelectorAll<HTMLElement>(':scope > .wb-card'));
+    const idx = (c: HTMLElement) => Number(c.dataset.index);
+    let cmp = (a: HTMLElement, b: HTMLElement) => idx(a) - idx(b);
+    if (mode !== 'index' && statsLoaded) {
+      const [field, dir] = mode.split('-') as ['t' | 'd7', 'asc' | 'desc'];
+      cmp = (a, b) => (dir === 'asc' ? cardVal(a, field) - cardVal(b, field) : cardVal(b, field) - cardVal(a, field)) || idx(a) - idx(b);
+    }
+    cards.sort(cmp).forEach((c) => box.appendChild(c));
+  }
+  function resortAll() {
+    document.querySelectorAll<HTMLSelectElement>('[data-sort-select]').forEach((sel) => sortCards(sel.dataset.sortSelect!, sel.value));
+  }
+  w.__sortCards = sortCards;
   document.querySelectorAll<HTMLSelectElement>('[data-sort-select]').forEach((sel) => {
     sel.disabled = true;
-    sel.addEventListener('change', () => sortGroup(sel.dataset.sortSelect!, sel.value));
+    sel.addEventListener('change', () => sortCards(sel.dataset.sortSelect!, sel.value));
   });
-  document.querySelectorAll<HTMLElement>('[data-sort-reset]').forEach((b) => b.addEventListener('click', () => {
-    const g = b.dataset.sortReset!;
-    const sel = document.querySelector<HTMLSelectElement>(`[data-sort-select="${g}"]`);
-    if (sel) sel.value = 'default';
-    sortGroup(g, 'default');
-  }));
 
   if (statsOn) {
     loadStats().then(flushPending);

@@ -98,7 +98,7 @@ async function recordCopy(db, env, body) {
 
   const existing = await db.first('SELECT applied FROM copy_events WHERE event_id = ?', [eventId]);
   let targets = [itemId];
-  if (item.content_type === 'account_bundle') {
+  if (item.content_type === 'group_bundle' || item.content_type === 'account_bundle') { // 整组（account_bundle 为旧名称，兼容）
     const mem = await db.all('SELECT m.member_id AS id FROM copy_bundle_members m JOIN copy_items i ON i.id = m.member_id WHERE m.bundle_id = ? AND i.active = 1', [itemId]);
     targets = [itemId, ...mem.map((r) => r.id)];
   }
@@ -123,10 +123,10 @@ async function recordCopy(db, env, body) {
     stmts.push({ sql: `INSERT INTO copy_daily_stats (item_id, day, count) SELECT ?, ?, 1 WHERE ${pending}
                        ON CONFLICT(item_id, day) DO UPDATE SET count = count + 1`, params: [t, day, eventId] });
   }
-  if (item.content_type === 'account_bundle' || item.content_type === 'all_bundle') {
+  if (['group_bundle', 'set_bundle', 'account_bundle', 'all_bundle'].includes(item.content_type)) {
     stmts.push({ sql: `INSERT INTO copy_batch_stats (event_id, batch_type, item_id, acupoint, account_id, created_at)
                        SELECT ?, ?, ?, ?, ?, ? WHERE ${pending} ON CONFLICT(event_id) DO NOTHING`,
-      params: [eventId, item.content_type === 'all_bundle' ? 'all' : 'account', itemId, item.acupoint, item.account_id, iso, eventId] });
+      params: [eventId, (item.content_type === 'set_bundle' || item.content_type === 'all_bundle') ? 'all' : 'group', itemId, item.acupoint, item.account_id, iso, eventId] });
   }
   stmts.push({ sql: `INSERT INTO copy_recent (dedupe_key, at_ms) SELECT ?, ? WHERE ${pending}
                      ON CONFLICT(dedupe_key) DO UPDATE SET at_ms = excluded.at_ms`, params: [dedupeKey, now, eventId] });

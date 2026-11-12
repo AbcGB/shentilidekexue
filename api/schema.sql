@@ -1,13 +1,13 @@
 -- 文案复制统计数据库结构（SQLite / Cloudflare D1 通用，可重复执行）
 -- 只保存内容编号、操作类型、时间和汇总数字；不保存老师身份、不保存原始 IP。
 
--- 每条可统计的文案（标题/描述/关键词/话题标签/单账号整组/全部六组）
+-- 每条可统计的文案（标题/描述/关键词/话题标签/整组/全部 N 组）
 CREATE TABLE IF NOT EXISTS copy_items (
   id TEXT PRIMARY KEY,               -- content_item_id，如 zusanli:douyin:title:a:v1
   acupoint TEXT NOT NULL,            -- 穴位 slug
-  account_id TEXT NOT NULL,          -- 账号编号（全部六组为 _all）
-  content_type TEXT NOT NULL,        -- title / description / keywords / hashtags / account_bundle / all_bundle
-  variant TEXT NOT NULL DEFAULT 'a', -- 备用版本标记（A/B/C 版本预留）
+  account_id TEXT NOT NULL,          -- 视频编号（copySets 的 id，例如 video）；列名沿用旧结构
+  content_type TEXT NOT NULL,        -- title / description / keywords / hashtags / group_bundle 整组 / set_bundle 全部 N 组
+  variant TEXT NOT NULL DEFAULT 'a', -- 组编号（variant id，例如 zaina；全部 N 组为 _all）
   version INTEGER NOT NULL DEFAULT 1,-- 内容版本号：新版本从 0 计数，旧版本保留为历史
   content_hash TEXT,                 -- 当前文字指纹
   original_hash TEXT,                -- 该版本首次登记时的文字指纹（不同说明做过“小修改”）
@@ -41,11 +41,11 @@ CREATE TABLE IF NOT EXISTS copy_daily_stats (
 );
 CREATE INDEX IF NOT EXISTS idx_copy_daily_day ON copy_daily_stats(day);
 
--- 整组复制记录：单账号整组（account）与全部六组（all）分开保存
+-- 整组复制记录：单组整组（group）与全部 N 组（all）分开保存
 CREATE TABLE IF NOT EXISTS copy_batch_stats (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   event_id TEXT NOT NULL UNIQUE,
-  batch_type TEXT NOT NULL,          -- account / all
+  batch_type TEXT NOT NULL,          -- group 单组整组 / all 全部 N 组（旧数据可能为 account）
   item_id TEXT NOT NULL,
   acupoint TEXT NOT NULL,
   account_id TEXT NOT NULL,

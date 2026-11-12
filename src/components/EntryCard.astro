@@ -2,6 +2,7 @@
 import ReviewBadge from './ReviewBadge.astro';
 import { u } from '../lib/url';
 import { getAcupoints } from '../lib/data';
+import { hasWorkbenchCopies } from '../lib/copy-core.mjs';
 const { e } = Astro.props;
 const all = getAcupoints();
 const pts = (e.acupoints || []).map((s: string) => all.find((p: any) => p.slug === s)).filter(Boolean);
@@ -29,6 +30,6 @@ const meridians = Array.from(new Set(pts.map((p: any) => p.meridian)));
   <div class="actions">
     {e.link && <a class="btn btn-outline" href={u(e.link)}>查看详情</a>}
     {pts.length === 1 && !e.link && <a class="btn btn-outline" href={u(`/xuewei/${pts[0].slug}/`)}>穴位详情</a>}
-    {pts.length === 1 && <a class="btn" href={u(`/teacher/${pts[0].slug}/`)}>对应发布文案</a>}
+    {pts.length === 1 && hasWorkbenchCopies(pts[0]) && <a class="btn" href={u(`/teacher/${pts[0].slug}/`)}>对应发布文案</a>}
   </div>
 </article>

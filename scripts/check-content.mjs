@@ -1,5 +1,5 @@
 // 内容检查脚本：构建前自动运行（npm run build 时），也可以单独运行：npm run check:content
-// 作用：检查穴位文件格式、六组文案是否完整、账号编号是否对应，发现问题用中文提示。
+// 作用：检查穴位文件格式、每条视频的 N 组文案是否完整、组编号是否重复，发现问题用中文提示。
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,17 +15,13 @@ function readJson(file) {
   catch (e) { errors.push(`文件格式错误（JSON 写法有误）：${path.relative(root, file)}\n    ${e.message}\n    常见原因：少了逗号、多了逗号、引号没有成对、使用了中文引号作为 JSON 引号。`); return null; }
 }
 
-const settings = readJson(C('accounts/account-settings.json'));
-if (settings) {
-  const ids = settings.accounts.map((a) => a.id);
-  if (new Set(ids).size !== ids.length) errors.push('account-settings.json 中有重复的账号编号 id');
-  for (const a of settings.accounts) if (!a.id || !a.name) errors.push(`account-settings.json 中有账号缺少 id 或 name`);
-  if (settings.accounts.length !== 6) warnings.push(`当前设置了 ${settings.accounts.length} 个账号（需求为 6 个）`);
-}
+const settings = readJson(C('copy-settings.json'));
 
-const REQUIRED = ['id', 'slug', 'name', 'displayName', 'pinyin', 'aliases', 'meridian', 'standardLocation', 'traditionalApplications', 'videoText', 'publicArticle', 'videos', 'images', 'sources', 'reviewer', 'reviewStatus', 'publishStatus', 'publishDate', 'updateDate', 'seo', 'summary', 'accountCopies'];
+const REQUIRED = ['id', 'slug', 'name', 'displayName', 'pinyin', 'aliases', 'meridian', 'standardLocation', 'traditionalApplications', 'videoText', 'publicArticle', 'videos', 'images', 'sources', 'reviewer', 'reviewStatus', 'publishStatus', 'publishDate', 'updateDate', 'seo', 'summary', 'copySets'];
 const slugs = new Set();
 let published = 0;
+let workbench = 0;
+const infos = [];
 for (const f of fs.readdirSync(C('acupoints')).filter((f) => f.endsWith('.json'))) {
   const file = C(`acupoints/${f}`);
   const p = readJson(file);
@@ -40,9 +36,12 @@ for (const f of fs.readdirSync(C('acupoints')).filter((f) => f.endsWith('.json')
   if (!['published', 'draft'].includes(p.publishStatus)) errors.push(`${label} 的 publishStatus 只能是 "published"（发布）或 "draft"（草稿）`);
   if (p.reviewStatus === '已审核' && (!p.reviewer || p.reviewer === '待审核' || !p.reviewDate)) errors.push(`${label} 标记为“已审核”，但没有填写真实的审核老师 reviewer 和审核日期 reviewDate`);
   const problems = validateCopies(p, settings);
+  if (p.accountCopies) warnings.push(`${label} 仍有旧字段 accountCopies（按平台账号分的旧格式），已不再使用，请改写到 copySets`);
   if (p.publishStatus === 'published') {
-    if (problems.length) warnings.push(`${label} 标记为发布，但六组文案不完整，本次不会出现在网站上：\n    - ${problems.join('\n    - ')}`);
-    else published++;
+    published++;
+    if (problems.length) warnings.push(`${label} 的工作台文案有问题，本次不会出现在老师工作台（公开知识页不受影响）：\n    - ${problems.join('\n    - ')}`);
+    else if (!p.copySets.length) infos.push(`${p.displayName || f}：公开知识页已发布，工作台文案待负责人提供`);
+    else workbench++;
   } else {
     warnings.push(`${label} 是草稿（draft），不会出现在网站上${problems.length ? `；还缺：${problems.join('；')}` : ''}`);
   }
@@ -65,4 +64,5 @@ if (errors.length) {
   console.error(`\n内容检查未通过，共 ${errors.length} 个错误。请按上面的提示修改后再试。`);
   process.exit(1);
 }
-console.log(`✅ 内容检查通过：已发布穴位 ${published} 个，六组文案完整。`);
+for (const i of infos) console.log(`ℹ️  ${i}`);
+console.log(`✅ 内容检查通过：已发布穴位 ${published} 个，其中 ${workbench} 个已录入工作台文案。`);
