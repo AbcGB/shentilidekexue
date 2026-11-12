@@ -33,16 +33,19 @@
     "defaultOgImage": "/images/brand/og-default.png"
   },
   "contact": {
-    "_说明": "联系方式。只填写真实资料；留空的项目不会在页面上显示。二维码图片放到 public/images/contact/ 后填写路径，例如 /images/contact/chen-wechat.png。",
+    "_说明": "联系方式。只填写真实资料；留空的项目不会在页面上显示。二维码图片放到 public/images/contact/ 后填写路径，例如 /images/contact/chen-wechat.png。电话请同时填写国际区号，例如 +86、+852。",
     "contactPerson": "陈老师",
     "note": "如有内容建议、合作咨询或其他问题，请联系陈老师。",
-    "wechatId": "",
+    "wechatId": "767778212",
     "wechatQr": "",
     "groupName": "身体里的科学工作群",
     "groupQr": "",
     "groupUrl": "",
     "email": "",
-    "wechatOfficialAccount": ""
+    "wechatOfficialAccount": "",
+    "phoneChina": "+86 13876636537",
+    "phoneHongKong": "+852 53392412",
+    "whatsapp": "@Pczcym"
   },
   "icp": {
     "_说明": "如果以后使用中国大陆服务器并完成 ICP 备案，把备案号填在 number（例如：京ICP备XXXXXXXX号），页面底部会自动显示并链接到工信部网站。",

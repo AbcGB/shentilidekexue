@@ -152,7 +152,16 @@ for (const f of ['contact/index.html', 'feedback/index.html']) {
   ok(text(h).includes('如有内容建议、合作咨询或其他问题，请联系陈老师'), `${f} 应优先展示“联系陈老师”`);
 }
 const siteCfg = JSON.parse(fs.readFileSync(path.join(root, 'src/config/site.json'), 'utf8'));
-if (!siteCfg.contact.wechatId) ok(!/微信号[:：]/.test(text(R('contact/index.html'))), '没有真实微信号时不应显示微信号');
+const contactPage = text(R('contact/index.html'));
+if (siteCfg.contact.wechatId) {
+  ok(contactPage.includes('微信搜索') && contactPage.includes(siteCfg.contact.wechatId), '联系页应展示微信搜索号');
+} else {
+  ok(!/微信号[:：]|微信搜索/.test(contactPage), '没有真实微信号时不应显示微信号或微信搜索');
+}
+if (siteCfg.contact.phoneChina) ok(contactPage.includes(siteCfg.contact.phoneChina) && contactPage.includes('中国电话'), '联系页应展示中国电话');
+if (siteCfg.contact.phoneHongKong) ok(contactPage.includes(siteCfg.contact.phoneHongKong) && contactPage.includes('香港电话'), '联系页应展示香港电话');
+if (siteCfg.contact.whatsapp) ok(contactPage.includes('WhatsApp 搜索') && contactPage.includes(siteCfg.contact.whatsapp), '联系页应展示 WhatsApp 搜索号');
+ok(!/images\/contact\//.test(R('contact/index.html')) || !!(siteCfg.contact.wechatQr || siteCfg.contact.groupQr), '未提供二维码时不应出现联系二维码图片');
 ok(!/登录保护(?!，)/.test(text(R('teacher/index.html')).replace(/没有登录保护/g, '')), '工作台不应宣称具有登录保护');
 for (const f of ['contact/device/index.html', 'contact/training/index.html']) {
   const h = R(f);

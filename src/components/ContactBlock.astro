@@ -1,12 +1,13 @@
 ---
-// 联系陈老师：微信、二维码、工作群入口。数据来自 src/config/site.json 的 contact，留空的项目不显示，不编造联系方式。
+// 联系陈老师：微信、电话、WhatsApp、二维码、工作群入口。数据来自 src/config/site.json 的 contact，留空的项目不显示，不编造联系方式。
 import { site } from '../lib/data';
 import { u } from '../lib/url';
 interface Props { heading?: string; headingLevel?: 2 | 3 }
 const { heading = '联系陈老师', headingLevel = 2 } = Astro.props;
 const c: any = site.contact || {};
 const H = `h${headingLevel}`;
-const hasDirect = !!(c.wechatId || c.wechatQr || c.groupQr || c.groupUrl || c.email);
+const telHref = (raw: string) => 'tel:' + String(raw).replace(/[^\d+]/g, '');
+const hasDirect = !!(c.wechatId || c.wechatQr || c.groupQr || c.groupUrl || c.email || c.phoneChina || c.phoneHongKong || c.whatsapp);
 ---
 <div class="card contact-block" data-contact-direct={hasDirect ? 'yes' : 'no'}>
   {heading && <H style="margin-top:0">{heading}</H>}
@@ -15,9 +16,27 @@ const hasDirect = !!(c.wechatId || c.wechatQr || c.groupQr || c.groupUrl || c.em
     <div class="contact-ways">
       {(c.wechatId || c.wechatQr) && (
         <div class="contact-way">
-          <div class="pm-platform">添加{c.contactPerson || '陈老师'}微信</div>
-          {c.wechatId && <div class="pm-name">微信号：<span class="selectable">{c.wechatId}</span></div>}
+          <div class="pm-platform">微信搜索</div>
+          {c.wechatId && <div class="pm-name"><span class="selectable">{c.wechatId}</span></div>}
           {c.wechatQr && <img class="pm-qr" src={u(c.wechatQr)} alt={`${c.contactPerson || '陈老师'}微信二维码`} width="140" height="140" loading="lazy" />}
+        </div>
+      )}
+      {c.phoneChina && (
+        <div class="contact-way">
+          <div class="pm-platform">中国电话</div>
+          <div class="pm-name"><a class="selectable" href={telHref(c.phoneChina)}>{c.phoneChina}</a></div>
+        </div>
+      )}
+      {c.phoneHongKong && (
+        <div class="contact-way">
+          <div class="pm-platform">香港电话</div>
+          <div class="pm-name"><a class="selectable" href={telHref(c.phoneHongKong)}>{c.phoneHongKong}</a></div>
+        </div>
+      )}
+      {c.whatsapp && (
+        <div class="contact-way">
+          <div class="pm-platform">WhatsApp 搜索</div>
+          <div class="pm-name"><span class="selectable">{c.whatsapp}</span></div>
         </div>
       )}
       {(c.groupQr || c.groupUrl) && (
