@@ -198,3 +198,48 @@ dl.info dd { margin: 0; }
 .trend .bar { flex: 1; min-width: 10px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; position: relative; }
 .trend .bar span { display: block; background: var(--blue); border-radius: 3px 3px 0 0; min-height: 1px; }
 .trend .bar em { position: absolute; bottom: -18px; left: 0; right: 0; text-align: center; font-size: .62rem; color: var(--muted); font-style: normal; }
+
+/* 老师工作台：N 组文案卡片 */
+.wb-set { margin: 22px 0 8px; }
+.wb-set-title { font-size: 1.15rem; margin: 18px 0 4px; }
+.wb-sort-bar { margin: 6px 0 2px; }
+.wb-card .wb-head { align-items: center; }
+.wb-card-title { margin: 0; font-size: 1.02rem; display: flex; align-items: center; gap: 8px; }
+.wb-no { display: inline-flex; min-width: 28px; height: 28px; padding: 0 6px; border-radius: 999px; background: var(--navy); color: #fff; font-size: .9rem; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
+.wb-angle { color: var(--navy); }
+.wb-card .wb-head .wb-side { flex-direction: row; align-items: center; gap: 8px; }
+.wb-card .wb-head + .wb-row { border-top: 0; }
+@media (max-width: 480px) { .wb-card .wb-head .wb-side { flex-direction: column; align-items: stretch; } }
+
+/* 品牌：皮穿支 - 身体里的科学 */
+.brand-sep { color: var(--muted); font-weight: 400; }
+.brand-sub { font-weight: 600; font-size: .92rem; color: var(--navy-2); }
+@media (max-width: 400px) { .brand-sub { font-size: .82rem; } }
+
+/* 皮穿支学习路径 */
+.lp-panel { margin: 14px 0; }
+.lp-panel-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.lp-count { font-size: 1.3rem; color: var(--navy); }
+.lp-track { height: 8px; background: #eef0f3; border-radius: 999px; margin-top: 12px; overflow: hidden; }
+.lp-bar { height: 100%; width: 0; background: var(--ok); transition: width .3s; }
+.linklike { background: none; border: 0; color: var(--blue); cursor: pointer; padding: 0 4px; font: inherit; }
+.lp-list { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 10px; }
+.lp-item { display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: start; }
+.lp-num { width: 40px; height: 40px; border-radius: 50%; background: var(--navy); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.lp-body h2 { margin: 2px 0 4px; font-size: 1.1rem; }
+.lp-body p { margin: 0 0 6px; color: var(--muted); font-size: .93rem; }
+.lp-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+.lesson { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 20px 16px; }
+.lesson h2 { margin-top: 1.3em; }
+.lesson blockquote { margin: 12px 0; border-left: 4px solid #e0a43a; background: var(--warn-bg); padding: 8px 14px; color: #5c4200; }
+.lp-nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin: 22px 0 6px; padding: 14px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); }
+.lp-next { white-space: normal; text-align: left; }
+.layer-fig { margin: 16px 0; }
+.layer-fig svg { width: 100%; height: auto; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
+.layer-fig figcaption { font-size: .86rem; color: var(--muted); margin-top: 6px; }
+@media (max-width: 560px) { .lp-nav { flex-direction: column; align-items: stretch; } .lp-nav .btn { width: 100%; } .lesson { padding: 4px 14px 14px; } }
+.hero-brand { font-size: .55em; color: var(--navy-2); font-weight: 600; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 4px 0 18px; }
+
+.eq-highlights { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px 10px 32px; }
+.eq-highlights li { margin: 4px 0; }

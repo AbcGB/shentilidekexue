@@ -1,11 +1,13 @@
 // 自动生成站点地图。老师工作台、搜索页不会出现在这里。
-import { getAcupoints, getLearning, equipment, siteUrl } from '../lib/data';
+import { getAcupoints, getLearning, getLessons, equipment, siteUrl } from '../lib/data';
 
 export function GET() {
   const base = siteUrl() + (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
   const latest = getLearning()[0]?.date;
   const pages: { loc: string; lastmod?: string }[] = [
     { loc: '/', lastmod: latest },
+    { loc: '/xuexi/', lastmod: getLessons().map((l) => l.updateDate).sort().pop() },
+    ...getLessons().map((l) => ({ loc: `/xuexi/${l.slug}/`, lastmod: l.updateDate })),
     { loc: '/xuewei/', lastmod: latest },
     ...getAcupoints().map((p: any) => ({ loc: `/xuewei/${p.slug}/`, lastmod: p.updateDate })),
     { loc: '/learning/today/', lastmod: latest },

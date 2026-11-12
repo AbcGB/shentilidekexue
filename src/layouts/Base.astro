@@ -17,12 +17,13 @@ interface Props {
 }
 const { title, description = site.seo.defaultDescription, path, noindex = false, ogImage = site.seo.defaultOgImage, ogType = 'website', updated, keywords, jsonLd, fullTitle = false } = Astro.props;
 const base = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
-const pageTitle = fullTitle ? title : `${title}｜${site.siteName}`;
+const pageTitle = fullTitle ? title : `${title} - ${site.siteName}`;
 const canonical = siteUrl() + base.replace(/\/$/, '') + path;
 const ogImageUrl = /^https?:/.test(ogImage) ? ogImage : siteUrl() + base.replace(/\/$/, '') + ogImage;
 const current = Astro.url.pathname;
 const nav = [
   { href: '/', label: '首页' },
+  { href: '/xuexi/', label: '皮穿支学习' },
   { href: '/xuewei/', label: '穴位知识库' },
   { href: '/learning/today/', label: '今日学习' },
   { href: '/equipment/', label: '设备演示' },
@@ -68,7 +69,7 @@ const isCurrent = (href: string) => {
     <div class="container header-inner">
       <a class="brand" href={u('/')} aria-label={`${site.siteName} 首页`}>
         <img src={u('/images/brand/logo.svg')} alt={`${site.siteName} 标志`} width="34" height="34" />
-        <span><span class="brand-name">{site.siteName}</span><span class="brand-slogan">{site.slogan}</span></span>
+        <span><span class="brand-name">{site.topic}<span class="brand-sep"> - </span><span class="brand-sub">{site.brand}</span></span><span class="brand-slogan">{site.slogan}</span></span>
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">☰ 菜单</button>
       <nav class="nav" id="site-nav" aria-label="主导航">
@@ -83,6 +84,7 @@ const isCurrent = (href: string) => {
     <div class="container">
       <div><strong style="color:#fff">{site.siteName}</strong> · {site.slogan}</div>
       <div class="footer-links">
+        <a href={u('/xuexi/')}>皮穿支学习路径</a>
         <a href={u('/xuewei/')}>穴位知识库</a>
         <a href={u('/learning/today/')}>今日学习</a>
         <a href={u('/learning/archive/')}>历史更新</a>
@@ -91,7 +93,7 @@ const isCurrent = (href: string) => {
         <a href={u('/about/')}>关于我们</a>
         <a href={u('/feedback/')}>意见反馈</a>
       </div>
-      <div>本站内容为传统经络知识科普与设备操作演示记录，不构成诊断或治疗建议；身体不适请到正规医疗机构就诊。标注“待审核”的内容尚未经专业老师确认。</div>
+      <div>本站内容为皮穿支解剖知识、传统经络知识科普与设备操作演示记录，不构成诊断或治疗建议；身体不适请到正规医疗机构就诊。皮穿支与腧穴的对应关系目前仍在研究中，标注“待审核”的内容尚未经专业老师确认。</div>
       {site.icp.number && <div><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">{site.icp.number}</a></div>}
     </div>
   </footer>

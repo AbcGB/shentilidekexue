@@ -3,7 +3,8 @@ import Base from '../layouts/Base.astro';
 import Search from '../components/Search.astro';
 import UpdateList from '../components/UpdateList.astro';
 import PointCard from '../components/PointCard.astro';
-import { site, getAcupoints, getAcupointsOrdered, getLearning, latestDate, equipment, siteUrl } from '../lib/data';
+import { site, getAcupoints, getAcupointsOrdered, getLearning, latestDate, equipment, siteUrl, getLessons } from '../lib/data';
+import LessonProgress from '../components/LessonProgress.astro';
 import { u } from '../lib/url';
 
 const points = getAcupoints();
@@ -14,25 +15,66 @@ const newest = [...getAcupointsOrdered()].sort((a, b) => (b.publishDate || '').l
 const hot = site.hotAcupoints.map((s: string) => points.find((p: any) => p.slug === s)).filter(Boolean);
 const deviceEntries = learning.filter((e) => e.type === '设备演示').slice(0, 3);
 const materials = learning.filter((e) => e.type === '学习资料').slice(0, 4);
-const jsonLd = { '@context': 'https://schema.org', '@type': 'WebSite', name: site.siteName, url: siteUrl() + '/', description: site.seo.defaultDescription, inLanguage: 'zh-CN' };
+const lessons = getLessons();
+const lessonOrder = lessons.map((l) => ({ slug: l.slug, title: l.title, href: u(`/xuexi/${l.slug}/`) }));
+const jsonLd = { '@context': 'https://schema.org', '@type': 'WebSite', name: site.siteName, alternateName: site.brand, url: siteUrl() + '/', description: site.seo.defaultDescription, inLanguage: 'zh-CN' };
 ---
-<Base title={`${site.siteName}｜${site.homeTitle}：穴位位置、经络知识与多普勒定位演示`} fullTitle path="/" jsonLd={jsonLd} keywords={['身体里的科学', '人体穴位科普', '穴位定位', '皮门多普勒', '多普勒定位演示']}>
+<Base title={site.siteName} fullTitle path="/" jsonLd={jsonLd} keywords={['皮穿支', '什么是皮穿支', '皮穿支学习', '皮穿支与穴位', '身体里的科学', '穴位定位', '多普勒定位演示']}>
   <section class="hero">
     <div class="container">
-      <p class="brand-line">{site.siteName} · {site.slogan}</p>
-      <h1>{site.homeTitle}</h1>
+      <p class="brand-line">{site.brand} · {site.slogan}</p>
+      <h1>{site.homeTitle}<span class="hero-brand"> - {site.brand}</span></h1>
       <p class="subtitle">{site.homeSubtitle}</p>
+      <div class="hero-cta" data-lp-root data-lp-lessons={JSON.stringify(lessonOrder)}>
+        <a class="btn btn-lg" data-lp-continue href={u(`/xuexi/${lessons[0].slug}/`)}>从第 1 课开始</a>
+        <a class="btn btn-lg btn-outline" href={u('/xuexi/')}>查看学习路径（{lessons.length} 课）</a>
+      </div>
       <Search mode="live" />
       <nav class="quick" aria-label="快捷入口">
-        <a href={u('/xuewei/')}><span class="ico">穴</span>人体穴位</a>
-        <a href={u('/learning/today/')}><span class="ico">今</span>今日学习</a>
-        <a href={u('/equipment/')}><span class="ico">演</span>设备演示</a>
+        <a href={u('/xuexi/')}><span class="ico">学</span>皮穿支学习</a>
+        <a href={u('/xuewei/')}><span class="ico">穴</span>穴位知识库</a>
+        <a href={u('/equipment/')}><span class="ico">门</span>皮门多普勒</a>
         <a href={u('/teacher/')}><span class="ico">✎</span>老师工作台</a>
       </nav>
     </div>
   </section>
 
   <div class="container">
+    <section>
+      <div class="section-head"><h2>什么是皮穿支</h2><a href={u(`/xuexi/${lessons[0].slug}/`)}>读第 1 课 →</a></div>
+      <div class="card">
+        <p style="margin-top:0"><strong>皮穿支</strong>是从较深层血管发出、穿过深筋膜、去营养皮下组织和皮肤的细小血管。它在整形与显微外科里是成熟的解剖术语，穿支皮瓣手术就靠它供血。</p>
+        <p>近年有研究观察到，皮穿支的穿出点与部分腧穴位置相近。这是正在积累的初步证据，样本规模有限，也存在有穿支而无对应穴位的情况，<strong>不能说“穴位就是皮穿支”</strong>。本站把已确立的解剖知识和仍在研究中的问题分开讲。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>皮门多普勒：穴位定位演示设备</h2><a href={u('/equipment/')}>设备介绍与培训 →</a></div>
+      <div class="card device-card">
+        <p style="margin-top:0">{equipment.intro}</p>
+        <ul class="eq-highlights">{(equipment as any).highlights.map((h: string) => <li>{h}</li>)}</ul>
+        <div class="hero-cta" style="justify-content:flex-start;margin:10px 0">
+          <a class="btn" href={u('/equipment/')}>了解皮门多普勒</a>
+          <a class="btn btn-outline" href={u('/equipment/#training')}>设备培训</a>
+          <a class="btn btn-outline" href={u('/equipment/#research')}>相关研究与专利</a>
+        </div>
+        <p class="small muted">定位演示只记录真实操作过程，不宣称百分之百精准，也不说明治疗效果。真实设备照片与演示视频待负责人提供，本站不使用 AI 生成或来源不明的设备图片。</p>
+        {deviceEntries.length > 0 && <UpdateList entries={deviceEntries} showDate />}
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>皮穿支学习路径</h2><a href={u('/xuexi/')}>全部 {lessons.length} 课 →</a></div>
+      <ol class="lp-list">
+        {lessons.map((l, i) => (
+          <li class="card lp-item">
+            <div class="lp-num">{i + 1}</div>
+            <div class="lp-body"><h3 style="margin:2px 0 4px"><a href={u(`/xuexi/${l.slug}/`)}>{l.title}</a></h3><p>{l.description}</p></div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
     <section>
       <div class="section-head">
         <h2>今日更新 <span class="small muted" data-today-label data-latest={latest}>（{latest}）</span></h2>
@@ -42,7 +84,8 @@ const jsonLd = { '@context': 'https://schema.org', '@type': 'WebSite', name: sit
     </section>
 
     <section>
-      <div class="section-head"><h2>最新穴位</h2><a href={u('/xuewei/')}>全部穴位 →</a></div>
+      <div class="section-head"><h2>穴位知识库</h2><a href={u('/xuewei/')}>全部穴位 →</a></div>
+      <p class="small muted">按国家标准整理常用穴位的标准位置与传统经络知识，是理解穿支与腧穴定位研究的基础。</p>
       <div class="grid grid-3">{newest.map((p) => <PointCard p={p} />)}</div>
     </section>
 
@@ -51,15 +94,7 @@ const jsonLd = { '@context': 'https://schema.org', '@type': 'WebSite', name: sit
       <div class="toc">{hot.map((p: any) => <a href={u(`/xuewei/${p.slug}/`)}>{p.displayName} · {p.meridian}</a>)}</div>
     </section>
 
-    <section>
-      <div class="section-head"><h2>最新设备演示</h2><a href={u('/equipment/')}>进入 {equipment.title} →</a></div>
-      <div class="card">
-        <h3 style="margin-top:0">{equipment.title}</h3>
-        <p>{equipment.intro}</p>
-        <p class="notice">真实设备照片与定位演示视频待负责人提供。本站不使用 AI 生成或来源不明的设备图片。</p>
-        {deviceEntries.length > 0 && <UpdateList entries={deviceEntries} showDate />}
-      </div>
-    </section>
+
 
     <section>
       <div class="section-head"><h2>学习资料</h2><a href={u('/ziliao/')}>全部学习资料 →</a></div>
@@ -69,8 +104,8 @@ const jsonLd = { '@context': 'https://schema.org', '@type': 'WebSite', name: sit
     <section>
       <h2>品牌介绍</h2>
       <div class="card">
-        <p style="margin-top:0"><strong>{site.siteName}</strong>（{site.slogan}）是一个人体穴位知识库与新媒体内容中心：整理常用穴位的标准位置、所属经络与传统经络知识，记录丁老师研发的皮门多普勒设备的真实定位演示过程，并为团队医生和老师提供每日发布内容。</p>
-        <p class="small muted">网站中尚未经专业老师确认的内容均明确标注“待审核”。传统经络理论中的应用不等同于现代医学已证实的疗效。</p>
+        <p style="margin-top:0"><strong>{site.brand}</strong>（{site.slogan}）以<strong>皮穿支</strong>为主题：从人体结构出发，讲清皮穿支的解剖和研究进展，整理常用穴位的标准定位与传统经络知识，并介绍丁志伟老师研发的皮门多普勒设备、设备培训和真实定位演示过程。</p>
+        <p class="small muted">网站中尚未经专业老师确认的内容均明确标注“待审核”。皮穿支与腧穴的关系仍在研究中；传统经络理论中的应用不等同于现代医学已证实的疗效。</p>
         <a href={u('/about/')}>了解更多 →</a>
       </div>
     </section>
@@ -84,4 +119,5 @@ const jsonLd = { '@context': 'https://schema.org', '@type': 'WebSite', name: sit
       el.textContent = latest === today ? `（今天 ${latest}）` : `（最近更新：${latest}）`;
     }
   </script>
+  <LessonProgress />
 </Base>

@@ -10,6 +10,7 @@ const entries = getLearning().filter((e) => e.date === latest);
   <div class="container">
     <div class="breadcrumb"><a href={u('/')}>首页</a> › 今日学习</div>
     <h1>今日学习</h1>
+    <p class="notice notice-info">想系统了解皮穿支？可以按顺序学习 <a href={u('/xuexi/')}><strong>皮穿支学习路径</strong></a>（共 6 课，本机自动记住进度）。</p>
     <p class="muted" data-today-head data-latest={latest}>最近更新：{latest}，共 {entries.length} 条。</p>
     {entries.map((e) => <EntryCard e={e} />)}
     <p><a class="btn btn-outline" href={u('/learning/archive/')}>查看历史更新 →</a></p>

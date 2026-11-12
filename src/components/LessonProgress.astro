@@ -1,0 +1,56 @@
+---
+// 学习进度：只保存在本机浏览器（localStorage），不需要登录。
+// 页面上的元素用 data-lp-* 属性标记，本脚本负责读写进度并更新显示。
+---
+<script>
+  type Prog = { done: Record<string, number>; last?: string };
+  const KEY = 'stl_xuexi_v1';
+  const read = (): Prog => { try { return JSON.parse(localStorage.getItem(KEY) || 'null') || { done: {} }; } catch { return { done: {} }; } };
+  const write = (p: Prog) => { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch { /* 隐私模式等无法保存时忽略 */ } };
+  const root = document.querySelector<HTMLElement>('[data-lp-root]');
+  if (root) {
+    const order: { slug: string; title: string; href: string }[] = JSON.parse(root.dataset.lpLessons || '[]');
+    const current = root.dataset.lpCurrent || '';
+    const p = read();
+    if (current) { p.last = current; write(p); }
+
+    function render() {
+      const prog = read();
+      const doneCount = order.filter((l) => prog.done[l.slug]).length;
+      document.querySelectorAll<HTMLElement>('[data-lp-count]').forEach((el) => (el.textContent = `${doneCount} / ${order.length}`));
+      document.querySelectorAll<HTMLElement>('[data-lp-bar]').forEach((el) => (el.style.width = `${Math.round((doneCount / Math.max(1, order.length)) * 100)}%`));
+      document.querySelectorAll<HTMLElement>('[data-lp-status]').forEach((el) => {
+        const s = el.dataset.lpStatus!;
+        const isDone = !!prog.done[s];
+        el.textContent = isDone ? '✓ 已学完' : (prog.last === s ? '上次学到这里' : '未学');
+        el.className = 'badge ' + (isDone ? 'badge-ok' : prog.last === s ? '' : 'badge-gray');
+      });
+      const next = order.find((l) => !prog.done[l.slug]);
+      document.querySelectorAll<HTMLAnchorElement>('[data-lp-continue]').forEach((a) => {
+        if (doneCount === 0) { a.href = order[0].href; a.textContent = '从第 1 课开始'; }
+        else if (next) { a.href = next.href; a.textContent = `继续学习：第 ${order.indexOf(next) + 1} 课 ${next.title}`; }
+        else { a.href = order[0].href; a.textContent = '全部学完了，从第 1 课复习'; }
+      });
+      document.querySelectorAll<HTMLButtonElement>('[data-lp-toggle]').forEach((b) => {
+        const isDone = !!prog.done[b.dataset.lpToggle!];
+        b.textContent = isDone ? '✓ 已学完（点此取消）' : '标记本课已学完';
+        b.classList.toggle('btn-outline', !isDone);
+      });
+    }
+    document.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      const toggle = t.closest<HTMLElement>('[data-lp-toggle]');
+      if (toggle) {
+        const prog = read(); const s = toggle.dataset.lpToggle!;
+        if (prog.done[s]) delete prog.done[s]; else prog.done[s] = Date.now();
+        write(prog); render(); return;
+      }
+      const nextLink = t.closest<HTMLElement>('[data-lp-complete]');
+      if (nextLink) { const prog = read(); prog.done[nextLink.dataset.lpComplete!] = prog.done[nextLink.dataset.lpComplete!] || Date.now(); write(prog); }
+      if (t.closest('[data-lp-reset]')) {
+        if (confirm('确定清空本机的学习进度吗？')) { write({ done: {} }); render(); }
+      }
+    });
+    render();
+  }
+</script>

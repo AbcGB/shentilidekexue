@@ -1,0 +1,67 @@
+---
+import Base from '../../layouts/Base.astro';
+import LessonProgress from '../../components/LessonProgress.astro';
+import LayerDiagram from '../../components/LayerDiagram.astro';
+import PointCard from '../../components/PointCard.astro';
+import ReviewBadge from '../../components/ReviewBadge.astro';
+import { getLessons, getAcupointsOrdered, site, siteUrl } from '../../lib/data';
+import { u } from '../../lib/url';
+
+export function getStaticPaths() {
+  const lessons = getLessons();
+  return lessons.map((l, i) => ({ params: { slug: l.slug }, props: { i } }));
+}
+const { i } = Astro.props as any;
+const lessons = getLessons();
+const l = lessons[i];
+const prev = lessons[i - 1];
+const next = lessons[i + 1];
+const Content = l.Content;
+const order = lessons.map((x) => ({ slug: x.slug, title: x.title, href: u(`/xuexi/${x.slug}/`) }));
+const path = `/xuexi/${l.slug}/`;
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const points = l.showAcupoints ? getAcupointsOrdered() : [];
+const jsonLd = {
+  '@context': 'https://schema.org', '@type': 'Article', headline: l.seoTitle || l.title, description: l.description,
+  dateModified: l.updateDate, inLanguage: 'zh-CN', isPartOf: { '@type': 'CreativeWorkSeries', name: '皮穿支学习路径', url: `${siteUrl()}${base}/xuexi/` },
+  publisher: { '@type': 'Organization', name: site.siteName }, mainEntityOfPage: `${siteUrl()}${base}${path}`,
+};
+---
+<Base title={l.seoTitle || l.title} description={l.description} path={path} ogType="article" updated={l.updateDate} keywords={l.keywords} jsonLd={jsonLd}>
+  <div class="container" data-lp-root data-lp-lessons={JSON.stringify(order)} data-lp-current={l.slug}>
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/xuexi/')}>皮穿支学习路径</a> › 第 {i + 1} 课</div>
+    <div class="lp-head">
+      <span class="badge">第 {i + 1} 课 / 共 {lessons.length} 课</span>
+      <span class="badge badge-gray">约 {l.minutes} 分钟</span>
+      <ReviewBadge status={l.reviewStatus} />
+      <span class="small muted">更新：<time datetime={l.updateDate}>{l.updateDate}</time> · 本机进度 <span data-lp-count>0 / {lessons.length}</span></span>
+    </div>
+    <h1>{l.title}</h1>
+    {l.evidenceNote && <p class="notice"><strong>证据说明：</strong>本课介绍的是正在进行中的研究，结论尚无定论。本站不把“穴位就是皮穿支”写成已证实的事实，相关内容待专业老师审核。</p>}
+    <article class="prose lesson">
+      {l.diagram === 'layers' && <LayerDiagram />}
+      <Content />
+    </article>
+
+    {points.length > 0 && (
+      <section>
+        <h2>穴位知识库</h2>
+        <div class="grid grid-3">{points.map((p: any) => <PointCard p={p} />)}</div>
+      </section>
+    )}
+    {l.slug === 'duopule-dingwei' && <p class="small"><a href={u('/equipment/')}>查看设备演示栏目 →</a></p>}
+
+    <nav class="lp-nav" aria-label="课程导航">
+      <div>{prev ? <a class="btn btn-outline" href={u(`/xuexi/${prev.slug}/`)}>← 上一课</a> : <a class="btn btn-outline" href={u('/xuexi/')}>← 课程目录</a>}</div>
+      <button type="button" class="btn btn-outline" data-lp-toggle={l.slug}>标记本课已学完</button>
+      <div>
+        {next
+          ? <a class="btn lp-next" href={u(`/xuexi/${next.slug}/`)} data-lp-complete={l.slug}>下一课：{next.title} →</a>
+          : <a class="btn lp-next" href={u('/xuexi/')} data-lp-complete={l.slug}>学完了，回到课程目录 →</a>}
+      </div>
+    </nav>
+    <p class="small muted">点“下一课”会把本课记为已学完。进度只保存在这台设备的浏览器里。</p>
+    <p class="small muted">本课为科普内容，不构成诊断或治疗建议；标注“待审核”的内容尚未经专业老师确认。</p>
+  </div>
+  <LessonProgress />
+</Base>
