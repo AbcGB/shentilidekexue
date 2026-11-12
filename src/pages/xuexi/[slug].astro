@@ -3,7 +3,6 @@ import Base from '../../layouts/Base.astro';
 import LessonProgress from '../../components/LessonProgress.astro';
 import LayerDiagram from '../../components/LayerDiagram.astro';
 import PointCard from '../../components/PointCard.astro';
-import ReviewBadge from '../../components/ReviewBadge.astro';
 import QuickAnswer from '../../components/QuickAnswer.astro';
 import { getLessons, getAcupointsOrdered, site, siteUrl } from '../../lib/data';
 import { u } from '../../lib/url';
@@ -34,11 +33,10 @@ const jsonLd = {
     <div class="lp-head">
       <span class="badge">第 {i + 1} 课 / 共 {lessons.length} 课</span>
       <span class="badge badge-gray">约 {l.minutes} 分钟</span>
-      <ReviewBadge status={l.reviewStatus} />
       <span class="small muted">更新：<time datetime={l.updateDate}>{l.updateDate}</time> · 本机进度 <span data-lp-count>0 / {lessons.length}</span></span>
     </div>
     <h1>{l.title}</h1>
-    {l.evidenceNote && <p class="notice"><strong>证据说明：</strong>本课介绍的是正在进行中的研究，结论尚无定论。本站不把“穴位就是皮穿支”写成已证实的事实，相关内容待专业老师审核。</p>}
+    {l.evidenceNote && <p class="notice notice-info"><strong>研究说明：</strong>本课介绍的是正在进行中的研究。本站不把“穴位就是皮穿支”写成已证实的事实。</p>}
     {l.quickAnswers?.length > 0 && <QuickAnswer ids={l.quickAnswers} links={false} />}
     <article class="prose lesson">
       {l.diagram === 'layers' && <LayerDiagram />}
@@ -63,7 +61,6 @@ const jsonLd = {
       </div>
     </nav>
     <p class="small muted">点“下一课”会把本课记为已学完。进度只保存在这台设备的浏览器里。</p>
-    <p class="small muted">本课为科普内容，不构成诊断或治疗建议；标注“待审核”的内容尚未经专业老师确认。</p>
   </div>
   <LessonProgress />
 </Base>

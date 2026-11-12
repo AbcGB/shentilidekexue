@@ -1,5 +1,4 @@
 ---
-import ReviewBadge from './ReviewBadge.astro';
 import { entryLink, u } from '../lib/url';
 import { getWorkbenchAcupoints, type LearningEntry } from '../lib/data';
 const wb = new Set(getWorkbenchAcupoints().map((p: any) => p.slug));
@@ -14,8 +13,6 @@ const { entries, showDate = false } = Astro.props;
         <a class="update-title" href={entryLink(e)}>{e.title}</a>
         <div class="update-meta">
           <span class="badge">{e.type}</span>
-          <span class="badge badge-gray">{e.publishStatus}</span>
-          <ReviewBadge status={e.reviewStatus} />
         </div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">

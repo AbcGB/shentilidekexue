@@ -11,3 +11,6 @@ data/
 .dev.vars
 api/generated/
 .wrangler/
+# 工作台动态组数测试的临时文件
+test-fixtures-tmp/
+dist-fixtures/

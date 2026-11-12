@@ -5,6 +5,9 @@ import filmingList from '../content/filming/acupoint-list.json';
 import equipment from '../content/equipment/device.json';
 import equipmentHistory from '../content/equipment/history.json';
 import training from '../content/training.json';
+import platforms from '../content/platforms.json';
+import team from '../content/team.json';
+import { visibleAccounts, groupedAccounts } from './platform-core.mjs';
 import { hasWorkbenchCopies } from './copy-core.mjs';
 
 export type CopyVariant = { id: string; no: number; angle: string; title: string; description: string; keywords: string[]; hashtags?: string[]; versions?: Record<string, number> };
@@ -16,13 +19,21 @@ export type LearningEntry = {
   reviewStatus: string; publishStatus: string; keywords?: string[]; link?: string;
 };
 
-export { site, copySettings, equipment, equipmentHistory, training };
+export { site, copySettings, equipment, equipmentHistory, training, platforms, team };
+
+/** 官方平台矩阵：只返回可以展示的账号（visible 且有主页链接、二维码或搜索提示），按 sortOrder 排序 */
+export function getVisibleAccounts(group?: string) { return visibleAccounts(platforms, group); }
+export function getAccountGroups() { return groupedAccounts(platforms); }
 
 const acupointModules = import.meta.glob('../content/acupoints/*.json', { eager: true, import: 'default' });
 const learningModules = import.meta.glob('../content/learning/*.json', { eager: true, import: 'default' });
 const articleModules = import.meta.glob('../content/articles/*.md', { eager: true });
 
-const allAcupointsRaw: Acupoint[] = Object.values(acupointModules) as Acupoint[];
+// 测试专用：只有运行 scripts/test-workbench-dynamic.mjs（设置 STL_TEST_FIXTURES=1、单独输出到 dist-fixtures）时，
+// 才会读入临时生成的 3 组 / 24 组 / 缺字段的模拟文案。正式构建永远不读这个目录。
+const fixtureModules = import.meta.glob('../../test-fixtures-tmp/acupoints/*.json', { eager: true, import: 'default' });
+const useFixtures = typeof process !== 'undefined' && process.env?.STL_TEST_FIXTURES === '1';
+const allAcupointsRaw: Acupoint[] = [...Object.values(acupointModules), ...(useFixtures ? Object.values(fixtureModules) : [])] as Acupoint[];
 
 /** 已发布的穴位（公开知识页）。草稿不会出现在网站上。穴位会持续增加，新增文件即可。 */
 export function getAcupoints(): Acupoint[] {

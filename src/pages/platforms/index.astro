@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import PlatformMatrix from '../../components/PlatformMatrix.astro';
+import ContactBlock from '../../components/ContactBlock.astro';
+import { site } from '../../lib/data';
+import { u } from '../../lib/url';
+---
+<Base title="官方平台 / 关注我们：身体里的科学新媒体矩阵" path="/platforms/" description={`「${site.brand}」官方平台：官方网站 pimen.cc 与品牌公众号、视频号、小红书、抖音，陈老师和丁志伟老师账号，以及全国参与老师账号。`} keywords={['身体里的科学', '官方平台', '公众号', '视频号', '小红书', '丁志伟', '皮穿支']}>
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 官方平台</div>
+    <h1>官方平台 / 关注我们</h1>
+    <p>「{site.brand}」的穴位知识、皮门多普勒定位演示和培训信息，会同时发布在官方网站和各平台账号上。可以通过主页链接、二维码或平台内搜索关注。</p>
+    <PlatformMatrix heading="" />
+    <h2>平台运营者：欢迎链接回官网</h2>
+    <p class="small">在平台允许的情况下，账号简介、文章和视频说明可以附上官方网站 <strong class="selectable">https://pimen.cc</strong>，或对应穴位页面的地址，方便观众查看完整的穴位知识和定位演示。</p>
+    <ContactBlock heading="账号收录与修改" headingLevel={2} />
+  </div>
+</Base>

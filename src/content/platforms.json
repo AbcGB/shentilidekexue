@@ -1,0 +1,34 @@
+{
+  "_说明": "官方平台 / 关注我们（品牌新媒体矩阵）。新增账号、改链接、换二维码都只改这个文件，不用改页面代码。",
+  "_字段说明": {
+    "id": "永久编号，小写字母/数字/短横线，写好后不要改",
+    "group": "分组编号，对应下面 groups 里的 id：brand 品牌账号 / chen 陈老师 / ding 丁志伟老师 / teachers 全国老师",
+    "platform": "平台名称，例如：微信公众号、微信视频号、小红书、抖音",
+    "accountName": "账号名称（必须是真实账号的名称）",
+    "owner": "账号所属人员或品牌",
+    "bio": "账号简介（可选）",
+    "homeUrl": "账号主页链接（必须是能打开的真实主页地址；没有就留空）",
+    "qrImage": "二维码图片路径，把图片放到 public/images/platforms/ 后填写，例如 /images/platforms/brand-gzh.png（没有就留空）",
+    "searchHint": "无法直接打开主页时，给访客的搜索提示（可选），例如：在微信里搜索公众号「xxx」",
+    "visible": "是否展示：true 展示 / false 不展示。只有 visible 为 true，并且至少有主页链接、二维码或搜索提示之一的账号才会显示",
+    "sortOrder": "显示顺序，数字小的在前"
+  },
+  "officialSite": "https://pimen.cc",
+  "groups": [
+    { "id": "brand", "title": "身体里的科学 · 品牌账号", "sortOrder": 1 },
+    { "id": "chen", "title": "陈老师 · 项目负责人", "sortOrder": 2 },
+    { "id": "ding", "title": "丁志伟老师", "sortOrder": 3 },
+    { "id": "teachers", "title": "全国参与老师", "sortOrder": 4 }
+  ],
+  "accounts": [
+    { "id": "brand-gzh", "group": "brand", "platform": "微信公众号", "accountName": "", "owner": "身体里的科学", "bio": "", "homeUrl": "", "qrImage": "", "searchHint": "", "visible": false, "sortOrder": 10 },
+    { "id": "brand-sph", "group": "brand", "platform": "微信视频号", "accountName": "", "owner": "身体里的科学", "bio": "", "homeUrl": "", "qrImage": "", "searchHint": "", "visible": false, "sortOrder": 11 },
+    { "id": "brand-xhs", "group": "brand", "platform": "小红书", "accountName": "", "owner": "身体里的科学", "bio": "", "homeUrl": "", "qrImage": "", "searchHint": "", "visible": false, "sortOrder": 12 },
+    { "id": "brand-douyin", "group": "brand", "platform": "抖音", "accountName": "", "owner": "身体里的科学", "bio": "", "homeUrl": "", "qrImage": "", "searchHint": "", "visible": false, "sortOrder": 13 },
+    { "id": "chen-gzh", "group": "chen", "platform": "微信公众号", "accountName": "", "owner": "陈老师", "bio": "", "homeUrl": "", "qrImage": "", "searchHint": "", "visible": false, "sortOrder": 20 },
+    { "id": "chen-sph", "group": "chen", "platform": "微信视频号", "accountName": "", "owner": "陈老师", "bio": "", "homeUrl": "", "qrImage": "", "searchHint": "", "visible": false, "sortOrder": 21 },
+    { "id": "chen-xhs", "group": "chen", "platform": "小红书", "accountName": "", "owner": "陈老师", "bio": "", "homeUrl": "", "qrImage": "", "searchHint": "", "visible": false, "sortOrder": 22 },
+    { "id": "ding-gzh", "group": "ding", "platform": "微信公众号", "accountName": "中西医之桥", "owner": "丁志伟老师", "bio": "游离于医疗、人文和中西医之间", "homeUrl": "", "qrImage": "", "searchHint": "在微信里搜索公众号「中西医之桥」", "visible": false, "sortOrder": 30 },
+    { "id": "ding-sph", "group": "ding", "platform": "微信视频号", "accountName": "", "owner": "丁志伟老师", "bio": "", "homeUrl": "", "qrImage": "", "searchHint": "", "visible": false, "sortOrder": 31 }
+  ]
+}

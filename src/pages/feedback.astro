@@ -1,44 +1,32 @@
 ---
 import Base from '../layouts/Base.astro';
 import CopyRuntime from '../components/CopyRuntime.astro';
+import ContactBlock from '../components/ContactBlock.astro';
 import { site } from '../lib/data';
 import { u } from '../lib/url';
 const fb = site.feedback;
-const template = `【网站意见反馈】\n老师称呼：\n对应穴位：\n标题/描述修改建议：\n专业知识纠错：\n想增加的学习内容：\n其他建议：`;
+const template = `【网站内容建议】\n老师称呼：\n对应页面或穴位：\n标题/描述修改建议：\n专业知识纠错（请注明依据）：\n想增加的内容：\n其他建议：`;
 ---
-<Base title="意见反馈：老师交流与内容纠错" path="/feedback/" description="身体里的科学·意见反馈：医生和老师可在这里提交标题描述修改建议、专业知识纠错和想增加的学习内容。">
+<Base title="内容建议与纠错：联系陈老师" path="/feedback/" description="身体里的科学·内容建议：文案修改建议、穴位知识纠错和想增加的内容，请联系项目负责人陈老师。">
   <div class="container">
-    <div class="breadcrumb"><a href={u('/')}>首页</a> › 意见反馈</div>
-    <h1>意见反馈 / 老师交流</h1>
-    <p>欢迎各位医生和老师反馈：文案修改建议、专业知识纠错、想增加的学习内容等。管理员会定期整理处理。</p>
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 内容建议</div>
+    <h1>内容建议与纠错</h1>
+    <p>欢迎各位医生和老师提出文案修改建议、专业知识纠错和想增加的内容。</p>
+    <ContactBlock />
+    {fb.formUrl && <p style="margin-top:12px"><a class="btn btn-lg" href={fb.formUrl} target="_blank" rel="noopener">{fb.formButtonText}</a></p>}
 
-    <div class="card" style="margin:16px 0">
-      <h2 style="margin-top:0">提交意见或建议</h2>
-      {fb.formUrl ? (
-        <p><a class="btn btn-lg" href={fb.formUrl} target="_blank" rel="noopener">{fb.formButtonText}</a></p>
-      ) : (
-        <div class="placeholder">
-          <p style="margin-top:0"><strong>在线反馈表单尚未设置。</strong>目前请复制下方反馈模板，填写后发到工作群。</p>
-          <p class="small">（管理员：在 <code>src/config/site.json</code> 的 <code>feedback.formUrl</code> 填入表单地址后，这里会自动变成“{fb.formButtonText}”按钮。）</p>
-        </div>
-      )}
-      {fb.groupUrl && <p><a class="btn btn-outline" href={fb.groupUrl} target="_blank" rel="noopener">{fb.groupButtonText}</a></p>}
-      <p class="small muted">{fb.groupNote}</p>
-    </div>
-
-    <div class="card">
-      <div class="section-head"><h2 style="margin-top:0">反馈模板</h2><button class="btn" type="button" data-copy-key="feedback">复制反馈模板</button></div>
+    <div class="card" style="margin-top:16px">
+      <div class="section-head"><h2 style="margin-top:0">反馈模板（可选）</h2><button class="btn" type="button" data-copy-key="feedback">复制反馈模板</button></div>
+      <p class="small muted" style="margin-top:0">复制后填好，发给陈老师或发到工作群 @陈老师。</p>
       <div class="wb-text" style="background:#f7f9fc;padding:12px;border-radius:8px">{template}</div>
     </div>
 
-    <h2>反馈须知</h2>
-    <ul>
-      <li>请不要提交患者姓名、病历、联系方式等个人隐私或敏感信息。</li>
-      <li>网站不提供在线诊疗或医疗咨询；如有身体不适请到正规医疗机构就诊。</li>
+    <ul class="small muted" style="margin-top:14px">
       <li>专业知识纠错请尽量注明依据（教材名称、版次、页码或国家标准条目）。</li>
-      <li>如使用第三方表单服务，数据由该服务商按其隐私政策处理。</li>
+      <li>请不要发送患者姓名、病历、联系方式等隐私信息。</li>
       <li>老师工作台的复制次数为匿名统计，不记录是谁复制，详见 <a href={u('/about/#privacy')}>隐私说明</a>。</li>
     </ul>
+    <p><a class="btn btn-outline" href={u('/contact/')}>培训咨询、设备合作 →</a></p>
     <script type="application/json" id="copy-data" set:html={JSON.stringify({ feedback: template })} />
   </div>
   <CopyRuntime />

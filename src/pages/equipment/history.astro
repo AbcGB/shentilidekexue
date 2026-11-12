@@ -1,42 +1,42 @@
 ---
 import Base from '../../layouts/Base.astro';
-import ReviewBadge from '../../components/ReviewBadge.astro';
 import { equipmentHistory } from '../../lib/data';
 import { u } from '../../lib/url';
 const h: any = equipmentHistory;
+const hasInfo = (g: any) => !!(g.period || g.changes || (g.photos || []).length);
+const withInfo = h.generations.filter(hasInfo);
+const without = h.generations.filter((g: any) => !hasInfo(g));
 ---
-<Base title="皮门多普勒设备迭代与技术发展" path="/equipment/history/" description="皮门多普勒设备迭代与技术发展：丁志伟老师研发的穴位定位设备经过多代改进，按代记录外观、主机、探头、信号和操作流程的变化。" keywords={['皮门多普勒', '设备迭代', '技术发展', '丁志伟', '穴位定位设备']}>
+<Base title="皮门多普勒设备迭代与技术发展" path="/equipment/history/" description="皮门多普勒设备迭代与技术发展：丁志伟老师研发的穴位定位设备经过多代改进，按代记录外观、主机、探头、信号和操作流程的变化；当前设备以研发团队最新资料为准。" keywords={['皮门多普勒', '设备迭代', '技术发展', '丁志伟', '穴位定位设备']}>
   <div class="container">
     <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/equipment/')}>皮门多普勒</a> › 设备迭代</div>
     <h1>{h.title}</h1>
-    <div class="detail-meta"><ReviewBadge status={h.reviewStatus} /><span class="small muted">更新时间：{h.updateDate}</span></div>
+    <p class="small muted">更新时间：{h.updateDate}</p>
     <p>{h.intro}</p>
 
     <section class="detail-section">
       <h2>各代设备</h2>
       <div class="gen-list">
-        {h.generations.map((g: any) => (
+        {withInfo.map((g: any) => (
           <article class="gen-item">
             <h3>{g.name}</h3>
-            <p class="small" style="margin:0 0 4px"><strong>时间：</strong>{g.period === '待补充' ? <span class="pending-tag">待补充</span> : g.period}</p>
-            <p style="margin:0"><strong>主要变化：</strong>{g.changes === '待补充' ? <span class="pending-tag">待补充</span> : g.changes}</p>
-            {g.photos.length > 0 ? (
-              <div class="grid grid-2" style="margin-top:8px">{g.photos.map((ph: any) => <figure style="margin:0"><img src={u(ph.src)} alt={ph.alt} loading="lazy" /><figcaption class="small muted">{ph.caption || ph.alt}</figcaption></figure>)}</div>
-            ) : <p class="small muted" style="margin:6px 0 0">照片：待补充（只用真实拍摄的设备照片）</p>}
+            {g.period && <p class="small" style="margin:0 0 4px"><strong>时间：</strong>{g.period}</p>}
+            {g.changes && <p style="margin:0"><strong>主要特点：</strong>{g.changes}</p>}
+            {g.photos.length > 0 && <div class="grid grid-2" style="margin-top:8px">{g.photos.map((ph: any) => <figure style="margin:0"><img src={u(ph.src)} alt={ph.alt} loading="lazy" /><figcaption class="small muted">{ph.caption || ph.alt}</figcaption></figure>)}</div>}
           </article>
         ))}
       </div>
+      {without.length > 0 && <div class="placeholder small" style="margin-top:10px"><strong>历代资料待提供：</strong>{without.map((g: any) => g.name).join('、')}的时间、外观、照片和主要变化，由丁志伟老师团队提供后补充。</div>}
     </section>
 
     <section class="detail-section">
       <h2>每一代记录哪些内容</h2>
       <ul>{h.aspects.map((a: string) => <li>{a}</li>)}</ul>
-      <p class="small muted">资料由丁志伟老师团队提供后补齐；没有可靠资料的内容保持“待补充”。</p>
     </section>
 
     <div class="cta-row" style="margin-top:16px">
-      <a class="btn" href={u('/equipment/')}>回到设备介绍</a>
-      <a class="btn btn-outline" href={u('/contact/device/')}>设备咨询</a>
+      <a class="btn" href={u('/equipment/')}>回到设备中心</a>
+      <a class="btn btn-outline" href={u('/training/')}>皮穿支针刺培训</a>
     </div>
   </div>
 </Base>

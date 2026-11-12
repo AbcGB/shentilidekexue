@@ -1,0 +1,40 @@
+---
+// 官方平台 / 关注我们。数据来自 src/content/platforms.json，账号不写死在页面里。
+// compact：首页、页脚、关于我们等处的简版；完整版用于 /platforms/ 页面。
+import { getAccountGroups, platforms } from '../lib/data';
+import { u } from '../lib/url';
+interface Props { compact?: boolean; heading?: string; headingLevel?: 2 | 3 }
+const { compact = false, heading = '官方平台 / 关注我们', headingLevel = 2 } = Astro.props;
+const groups = getAccountGroups();
+const total = groups.reduce((n, g) => n + g.accounts.length, 0);
+const H = `h${headingLevel}`;
+const H2 = `h${headingLevel + 1}`;
+const site = (platforms as any).officialSite;
+---
+<section class="platform-matrix" data-platform-count={total}>
+  {heading && <H>{heading}</H>}
+  <p class="small muted" style="margin-top:0">官方网站 <a href={site}>{site.replace(/^https?:\/\//, '')}</a> 是「身体里的科学」品牌内容的中心，与品牌公众号、视频号、小红书、丁志伟老师公众号和全国老师账号相互连接。</p>
+  {total > 0 ? (
+    <div class="pm-groups">
+      {groups.map((g) => (
+        <div class="pm-group">
+          <H2 class="pm-group-title">{g.title}</H2>
+          <div class="pm-list">
+            {g.accounts.map((a: any) => (
+              <div class="pm-card" data-account={a.id}>
+                <div class="pm-platform">{a.platform}</div>
+                <div class="pm-name">{a.accountName}</div>
+                {!compact && a.bio && <div class="small muted">{a.bio}</div>}
+                {a.qrImage && <img class="pm-qr" src={u(a.qrImage)} alt={`${a.platform}「${a.accountName}」二维码`} loading="lazy" width="120" height="120" />}
+                {a.homeUrl ? <a class="btn btn-sm btn-outline" href={a.homeUrl} target="_blank" rel="noopener">打开主页</a> : a.searchHint && <div class="small">{a.searchHint}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : !compact && (
+    <p class="pm-empty">品牌账号、陈老师和丁志伟老师的公众号、视频号、小红书等官方账号，确认主页链接和二维码后会在这里统一公布。</p>
+  )}
+  {compact && <p class="small" style="margin-bottom:0"><a href={u('/platforms/')}>查看全部官方平台 →</a></p>}
+</section>

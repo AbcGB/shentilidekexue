@@ -15,6 +15,8 @@ export function GET() {
     { loc: '/equipment/', lastmod: (equipment as any).updateDate },
     { loc: '/equipment/history/', lastmod: (equipmentHistory as any).updateDate },
     { loc: '/training/', lastmod: (training as any).updateDate },
+    { loc: '/contact/' },
+    { loc: '/platforms/' },
     { loc: '/contact/device/' },
     { loc: '/contact/training/' },
     { loc: '/zhuanli/cn113975152b/', lastmod: '2026-11-13' },

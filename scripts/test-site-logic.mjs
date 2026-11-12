@@ -1,9 +1,10 @@
 // 网站逻辑一致性测试（需先 npm run build；子目录部署时用 BASE_PATH=/仓库名/ 构建后，以同样的 BASE_PATH 运行）。
-// 1) 全站站内链接都能打开；2) 简短回答出现在该出现的公开页面、标“待审核”、结构化数据与可见文字一致；
+// 1) 全站站内链接都能打开；2) 简短回答出现在该出现的公开页面、不带内部审核徽章、结构化数据与可见文字一致；
 // 3) 内部页面（工作台、草稿、拍摄清单、拍摄建议、审核进度）noindex 且不在站点地图；4) 用词统一、无禁止说法。
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { visibleAccounts, canShowAccount, validatePlatforms } from '../src/lib/platform-core.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -38,7 +39,8 @@ const where = { 'index.html': ['definition', 'acupoints'], 'xuexi/index.html': [
 const text = (h) => h.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, '');
 for (const [f, ids] of Object.entries(where)) {
   const h = R(f);
-  ok(h.includes('class="quick-answer"') && /quick-answer[\s\S]*?待审核/.test(h), `${f} 缺少简短回答或未标待审核`);
+  ok(h.includes('class="quick-answer"'), `${f} 缺少简短回答`);
+  ok(!/<section class="quick-answer"[\s\S]*?<\/section>/.exec(h)?.[0].includes('待审核'), `${f} 简短回答不应再显示“待审核”徽章`);
   for (const id of ids) { const a = qa.answers.find((x) => x.id === id); ok(text(h).includes(a.a), `${f} 未显示简短回答 ${id}`); }
 }
 for (const a of qa.answers) {
@@ -106,13 +108,52 @@ for (const p of ['/training/', '/contact/']) ok(nav.includes(`href="${BASE}${p}`
 const eqText = text(eq);
 ok(!/不宣称/.test(eqText), '设备页不应再出现“不宣称……”说明列表');
 ok(eqText.includes('定位操作快速、精细'), '设备页应介绍“定位操作快速、精细”');
-ok(eqText.includes('本站介绍不构成诊疗建议'), '设备页页脚应保留简短的诊疗建议说明');
+ok(eqText.includes('素材待提供'), '设备页没有真实照片/视频/测试数据时应清楚显示“素材待提供”');
+ok(!/8\s*MHz|2\s*厘米/.test(eqText), '设备页不应把 8 MHz / 约 2 厘米写成当前设备性能');
+ok(eqText.includes('当前设备以丁老师团队提供的最新资料为准') && eqText.includes('不代表当前设备的性能'), '设备页应说明早期研究不代表当前设备性能');
+for (const k of ['当前版本', '实际操作过程', '真实操作演示', '当前版本技术资料', '设备迭代与技术发展', '相关研究与背景']) ok(eqText.includes(k), `设备页缺少栏目「${k}」`);
 ok(eqText.includes('并非皮门多普勒设备本身的专利'), '设备页专利说明应保留“并非皮门多普勒设备本身的专利”');
 ok(eq.includes(`href="${BASE}/equipment/history/"`) && eq.includes(`href="${BASE}/training/"`) && eq.includes(`href="${BASE}/contact/device/"`), '设备页应链接到设备迭代、培训和设备咨询');
-ok(/待审核/.test(R('index.html')) && /待审核/.test(eq), '首页和设备页应保留“待审核”标记');
+const publicFiles = htmlFiles.filter((f) => !f.startsWith('teacher/') && !f.startsWith('admin/'));
+for (const f of publicFiles) {
+  const t = text(R(f));
+  ok(!/待审核|待填写|审核日志|审核老师|内容审核信息|尚未经专业老师|待核对/.test(t), `${f} 公开页面不应展示内部审核/待填写状态`);
+  ok(!/仅供学习参考|不构成诊断或治疗/.test(t), `${f} 不应出现机械重复的“仅供学习参考，不构成诊断或治疗”`);
+  ok((t.match(/不构成诊疗建议/g) || []).length <= 1, `${f} 诊疗说明只应在页脚出现一次`);
+  ok(t.includes('如有内容建议、合作咨询或其他问题，请联系陈老师'), `${f} 页脚缺少“联系陈老师”说明`);
+  ok(R(f).includes(`href="${BASE}/platforms/"`), `${f} 页脚缺少官方平台入口`);
+}
+for (const f of publicFiles.filter((f) => f.startsWith('xuewei/') && f !== 'xuewei/index.html')) ok(!R(f).includes(`href="${BASE}/contact/device/"`), `${f} 穴位页不应放设备销售按钮`);
 const hist = text(R('equipment/history/index.html'));
-ok(hist.includes('待补充') && !/\d{4}\s*年/.test(hist), '设备迭代页各代应标“待补充”，不能出现未提供的年份');
-ok(text(R('training/index.html')).includes('具体安排请咨询'), '培训页未定的安排应写“具体安排请咨询”');
+ok(hist.includes('资料待提供') && !/\d{4}\s*年/.test(hist), '设备迭代页缺资料的各代应合并说明“资料待提供”，不能出现未提供的年份');
+const tr = R('training/index.html'), trText = text(tr);
+ok(trText.includes('具体安排请咨询'), '培训页未定的安排应写“具体安排请咨询”');
+ok(/data-course="small"[\s\S]*?牛老师[\s\S]*?基础教学/.test(tr) && /data-course="big"[\s\S]*?丁志伟老师[\s\S]*?核心技术讲解/.test(tr), '培训页应区分牛老师小课（基础教学）和丁志伟老师大课（核心技术讲解）');
+ok(text(R('index.html')).includes('牛老师') && text(R('index.html')).includes('了解培训 / 课程咨询'), '首页应突出培训咨询与小课/大课');
+
+console.log('F. 官方平台矩阵与联系方式');
+const plat = JSON.parse(fs.readFileSync(path.join(root, 'src/content/platforms.json'), 'utf8'));
+ok(validatePlatforms(plat).length === 0, '官方平台配置有问题：' + validatePlatforms(plat).join('；'));
+ok(fs.existsSync(path.join(dist, 'platforms/index.html')) && sitemap.includes('/platforms/<'), '缺少官方平台页或未进入站点地图');
+const vis = visibleAccounts(plat);
+for (const f of ['index.html', 'about/index.html', 'contact/index.html', 'platforms/index.html']) {
+  const h = R(f);
+  ok(h.includes('class="platform-matrix"'), `${f} 缺少官方平台 / 关注我们`);
+  ok(h.includes(`data-platform-count="${vis.length}"`), `${f} 展示的账号数应为 ${vis.length}`);
+}
+for (const a of plat.accounts) {
+  const shown = R('platforms/index.html').includes(`data-account="${a.id}"`);
+  ok(shown === canShowAccount(a), `账号 ${a.id} 的显示状态不对（visible=${a.visible}）`);
+}
+for (const f of publicFiles) for (const m of R(f).matchAll(/<a\b[^>]*href="([^"]*)"/g)) ok(m[1].trim() !== '', `${f} 有空链接`);
+for (const f of ['contact/index.html', 'feedback/index.html', 'contact/training/index.html', 'contact/device/index.html']) {
+  const h = R(f);
+  ok(!/<form\b|<input\b|<textarea\b(?![^>]*readonly)/.test(h.replace(/<div class="manual-dialog"[\s\S]*?<\/div>\s*<\/div>/, '')), `${f} 不应有收集信息的表单`);
+  ok(text(h).includes('如有内容建议、合作咨询或其他问题，请联系陈老师'), `${f} 应优先展示“联系陈老师”`);
+}
+const siteCfg = JSON.parse(fs.readFileSync(path.join(root, 'src/config/site.json'), 'utf8'));
+if (!siteCfg.contact.wechatId) ok(!/微信号[:：]/.test(text(R('contact/index.html'))), '没有真实微信号时不应显示微信号');
+ok(!/登录保护(?!，)/.test(text(R('teacher/index.html')).replace(/没有登录保护/g, '')), '工作台不应宣称具有登录保护');
 for (const f of ['contact/device/index.html', 'contact/training/index.html']) {
   const h = R(f);
   ok(!/<form\b|<input\b|<textarea\b(?![^>]*readonly)/.test(h.replace(/<div class="manual-dialog"[\s\S]*?<\/div>\s*<\/div>/, '')), `${f} 不应有收集信息的表单`);

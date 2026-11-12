@@ -1,49 +1,39 @@
 ---
-// 静态咨询页（设备咨询 / 培训咨询）。目前没有在线表单，只引导到工作群 @陈老师；不收集任何个人信息。
+// 静态咨询页（培训咨询 / 设备咨询）。没有在线表单、不收集任何信息：引导联系陈老师，咨询模板只是方便复制后发给陈老师。
 import Base from '../layouts/Base.astro';
 import CopyRuntime from './CopyRuntime.astro';
+import ContactBlock from './ContactBlock.astro';
 import { site } from '../lib/data';
 import { u } from '../lib/url';
 interface Props { kind: 'device' | 'training' }
 const { kind } = Astro.props;
-const fb = site.feedback;
 const isDevice = kind === 'device';
 const title = isDevice ? '设备咨询' : '培训咨询';
 const path = isDevice ? '/contact/device/' : '/contact/training/';
 const topic = isDevice ? '皮门多普勒设备' : '皮穿支针刺培训';
 const template = isDevice
-  ? `【皮门多普勒设备咨询】\n称呼：\n所在城市：\n单位/身份（如：医生、老师、机构）：\n想了解：设备演示 / 采购 / 使用培训 / 其他\n方便联系的时间：`
-  : `【皮穿支针刺培训咨询】\n称呼：\n所在城市：\n专业身份（如：执业医生、针灸老师）：\n想了解：开课时间 / 地点 / 课程内容 / 其他\n是否已有皮门多普勒设备：`;
+  ? `【皮门多普勒设备咨询】\n称呼：\n所在省市：\n单位/身份（如：医生、老师、机构）：\n想了解：设备演示 / 采购 / 合作 / 其他\n从哪里了解到我们：`
+  : `【皮穿支针刺培训咨询】\n称呼：\n所在省市：\n专业身份或学习背景：\n想了解：牛老师小课 / 丁志伟老师大课 / 都想了解\n想了解的培训内容：\n从哪里了解到我们（网站、哪位老师的账号、工作群等）：`;
 const other = isDevice ? { href: '/contact/training/', label: '培训咨询' } : { href: '/contact/device/', label: '设备咨询' };
-const back = isDevice ? { href: '/equipment/', label: '看皮门多普勒设备介绍' } : { href: '/training/', label: '看皮穿支针刺培训介绍' };
+const back = isDevice ? { href: '/equipment/', label: '看皮门多普勒设备介绍' } : { href: '/training/', label: '看小课与大课介绍' };
 ---
-<Base title={`${title}：${topic}`} path={path} description={`${topic}${title}：目前请在「${site.brand}」工作群里 @陈老师 咨询，可复制咨询模板发送。`} keywords={[title, topic, '皮门多普勒', '皮穿支针刺培训', site.brand]}>
+<Base title={`${title}：${topic}`} path={path} description={isDevice ? `皮门多普勒设备咨询：设备演示、采购与合作，请联系「${site.brand}」项目负责人陈老师。` : `皮穿支针刺培训咨询：牛老师小课、丁志伟老师大课的开课时间和地点，请联系「${site.brand}」项目负责人陈老师。`} keywords={[title, topic, '皮门多普勒', '皮穿支针刺培训', site.brand]}>
   <div class="container">
-    <div class="breadcrumb"><a href={u('/')}>首页</a> › {title}</div>
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/contact/')}>联系我们</a> › {title}</div>
     <h1>{title}</h1>
-    <p>想了解{topic}{isDevice ? '的演示、采购和使用' : '的开课时间、地点和课程内容'}，请直接联系项目负责人陈老师。</p>
+    <p>{isDevice ? '想了解皮门多普勒设备的演示、采购或后续合作，请联系项目负责人陈老师。' : '想参加皮穿支针刺培训——牛老师小课（基础教学）或丁志伟老师大课（核心技术讲解），请联系项目负责人陈老师。团队会根据各地区的意向学员情况协调开课，时间、地点和费用具体安排请咨询。'}</p>
 
-    <div class="card" style="margin:16px 0">
-      <h2 style="margin-top:0">怎么咨询</h2>
-      <ol class="consult-steps">
-        <li>复制下面的咨询模板，填好称呼、城市和想了解的内容。</li>
-        <li>发到「{site.brand}」工作群（微信群），并 @陈老师。</li>
-        <li>陈老师会在群里或私下回复你{isDevice ? '设备的具体安排' : '培训的具体安排'}。</li>
-      </ol>
-      {fb.groupUrl && <p><a class="btn btn-outline" href={fb.groupUrl} target="_blank" rel="noopener">{fb.groupButtonText}</a></p>}
-      <p class="small muted" style="margin-bottom:0">网站目前没有在线提交表单。还不在群里的朋友，可以请认识的群内医生、老师帮忙转达。</p>
-    </div>
+    <ContactBlock />
 
-    <div class="card">
-      <div class="section-head"><h2 style="margin-top:0">咨询模板</h2><button class="btn" type="button" data-copy-key="consult">复制咨询模板</button></div>
+    <div class="card" style="margin-top:16px">
+      <div class="section-head"><h2 style="margin-top:0">咨询时可以说明</h2><button class="btn" type="button" data-copy-key="consult">复制咨询模板</button></div>
+      <p class="small muted" style="margin-top:0">复制后填好，发给陈老师或发到工作群 @陈老师，回复更快。</p>
       <div class="wb-text" style="background:#f7f9fc;padding:12px;border-radius:8px">{template}</div>
     </div>
 
-    <h2>咨询须知</h2>
-    <ul>
-      <li>请不要在群里发患者姓名、病历、检查单等隐私信息。</li>
-      <li>网站和咨询不提供在线诊疗；身体不适请到正规医疗机构就诊。</li>
-      <li>{isDevice ? '设备价格、供货和演示安排' : '开课时间、地点和费用'}以陈老师的正式答复为准。</li>
+    <ul class="small muted" style="margin-top:14px">
+      <li>{isDevice ? '设备价格、供货和演示安排' : '开课时间、地点、人数和费用'}以陈老师的正式答复为准。</li>
+      <li>请不要发送患者姓名、病历、检查单等隐私信息。</li>
     </ul>
     <div class="cta-row" style="margin-top:16px">
       <a class="btn btn-outline" href={u(back.href)}>{back.label}</a>

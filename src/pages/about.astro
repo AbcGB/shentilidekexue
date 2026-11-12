@@ -1,53 +1,60 @@
 ---
 import Base from '../layouts/Base.astro';
-import { site } from '../lib/data';
+import PlatformMatrix from '../components/PlatformMatrix.astro';
+import ContactBlock from '../components/ContactBlock.astro';
+import { site, team } from '../lib/data';
 import { u } from '../lib/url';
+const tm: any = team;
 ---
-<Base title="关于我们" path="/about/" description="关于皮穿支 - 身体里的科学：围绕丁志伟老师研发的皮门多普勒设备和皮穿支针刺培训，由全国医生、老师一起运营的品牌官方网站与新媒体内容平台。">
+<Base title="关于我们" path="/about/" description="关于皮穿支 - 身体里的科学：围绕丁志伟老师研发的皮门多普勒设备、皮穿支技术和皮穿支针刺培训（牛老师小课、丁志伟老师大课），由陈老师负责运营、全国医生和老师共同参与的品牌官方网站。">
   <div class="container prose">
     <div class="breadcrumb"><a href={u('/')}>首页</a> › 关于我们</div>
     <h1>关于我们</h1>
     <p><strong>{site.siteName}</strong> —— {site.slogan}</p>
-    <p>“身体里的科学”是品牌，<strong>皮穿支</strong>是网站的内容主题。我们围绕丁志伟老师研发的<strong>皮门多普勒</strong>设备和<strong>皮穿支针刺培训</strong>，介绍设备、组织培训，并和全国的医生、老师一起，每天分享穴位定位、设备实操和皮穿支知识。</p>
+    <p>“身体里的科学”是品牌，<strong>皮穿支</strong>是主题。我们围绕丁志伟老师研发的<strong>皮门多普勒</strong>设备、皮穿支技术和<strong>皮穿支针刺培训</strong>，以人体穴位知识为入口，展示真实的定位演示，并和全国的医生、学者、老师一起持续分享内容。</p>
 
-    <h2>丁志伟老师</h2>
-    <p>皮门多普勒设备的研发者，皮穿支针刺培训的核心授课人物。丁老师的微信公众号是「中西医之桥」，签名为“游离于医疗、人文和中西医之间”。</p>
-    <p class="small muted">丁老师的技术理念与研发经历，待丁老师团队提供原文资料后补充。</p>
-
-    <h2>皮门多普勒设备</h2>
-    <p>丁志伟老师研发的穴位定位设备，经过多代改进，定位操作快速、精细。<a href={u('/equipment/')}>了解设备 →</a> <a href={u('/equipment/history/')}>设备迭代 →</a></p>
-
-    <h2>皮穿支针刺培训</h2>
-    <p>面向医生和相关专业人士，从皮穿支解剖、设备操作到穴位定位和针刺实操，以线下实操为主，具体安排请咨询。<a href={u('/training/')}>了解培训 →</a></p>
+    <h2 id="team">核心团队</h2>
+    <ul>{tm.core.map((m: any) => <li><strong>{m.name}</strong>（{m.role}）：{m.desc}</li>)}</ul>
+    <p>丁志伟老师的微信公众号是「中西医之桥」，签名为“游离于医疗、人文和中西医之间”。</p>
 
     <h2>全国老师团队</h2>
-    <p>由项目负责人陈老师统一策划，全国十多位医生和老师在各自的视频号、抖音、小红书、公众号等账号上，持续发布穴位定位短视频、设备演示和专业文章。网站为大家提供拍摄清单、拍摄规范和多组文案，方便每天快速完成拍摄和发布。</p>
-    <p class="small muted">团队老师介绍待负责人提供真实资料后补充。</p>
+    <p>{tm.teamNote}大家在各自的视频号、抖音、小红书、公众号等账号上发布穴位知识和皮门多普勒定位演示；网站为大家提供统一的文案和拍摄清单，方便快速复制、发布。</p>
+    {tm.teachers.length > 0 && <ul>{tm.teachers.map((x: any) => <li><strong>{x.name}</strong>{x.title && <>（{x.title}）</>}{x.region && <> · {x.region}</>}{x.bio && <>：{x.bio}</>}</li>)}</ul>}
+
+    <h2>皮门多普勒设备</h2>
+    <p>丁志伟老师研发的穴位定位设备，经过多代改进，定位操作快速、精细。<a href={u('/equipment/')}>设备中心 →</a> <a href={u('/equipment/history/')}>设备迭代 →</a></p>
+
+    <h2>皮穿支针刺培训</h2>
+    <p>牛老师小课侧重基础教学，丁志伟老师大课侧重核心技术讲解，以线下实操为主，具体安排请咨询。<a href={u('/training/')}>了解培训 →</a></p>
 
     <h2>网站提供什么</h2>
     <ul>
-      <li><strong>设备与培训</strong>：皮门多普勒设备介绍、设备迭代、皮穿支针刺培训，以及<a href={u('/contact/device/')}>设备咨询</a>、<a href={u('/contact/training/')}>培训咨询</a>入口。</li>
-      <li><strong>皮穿支学习路径</strong>：按顺序讲皮穿支的定义、组织层次、显微外科应用、与腧穴的关系和多普勒定位原理。</li>
-      <li><strong>人体穴位知识库</strong>：常用穴位的标准位置、所属经络、简便找法和传统经络知识，逐步扩充到全身穴位。</li>
-      <li><strong>老师工作台</strong>：每条穴位视频准备多组标题、描述和关键词，老师按编号挑选、分字段复制。</li>
+      <li><strong>人体穴位知识中心</strong>：每个穴位一页，包含标准定位、取穴方法、传统功能与主治和定位演示，逐步扩充到全身标准经穴。</li>
+      <li><strong>皮门多普勒设备中心</strong>：当前版本、操作过程、设备迭代和相关研究背景。</li>
+      <li><strong>培训中心</strong>：牛老师小课、丁志伟老师大课和<a href={u('/contact/training/')}>培训咨询</a>。</li>
+      <li><strong>官方平台矩阵</strong>：官方网站与品牌公众号、视频号、小红书和老师账号相互连接。</li>
+      <li><strong>老师工作台</strong>：每条穴位视频准备多组标题、描述、关键词，老师打开网页就能分字段复制。</li>
     </ul>
 
     <h2>内容原则</h2>
     <ul>
       <li>穴位标准定位以国家标准 GB/T 12346-2021《经穴名称与定位》和针灸教材为依据。</li>
-      <li>设备介绍以丁老师团队提供的当前设备资料为准；早期论文和专利只作技术背景。</li>
+      <li>设备介绍以丁志伟老师团队提供的当前设备资料为准；早期论文和专利只作技术背景。</li>
       <li>图片和视频只用真实拍摄并获得授权的素材，不用 AI 生成的设备图片，不展示患者隐私。</li>
-      <li>尚未经专业老师审核的内容标注“待审核”。</li>
+      <li>培训时间、地点和费用以负责人正式发布为准。</li>
     </ul>
     <h2 id="update-loop">网站怎么持续学习和更新</h2>
-    <p>网站会持续增加内容，但不会让程序自己写医学内容并直接发布。每一条内容都走同一个循环：</p>
+    <p>网站会持续增加内容，但不会让程序自己写医学内容并直接发布：</p>
     <ol>
-      <li><strong>资料进来</strong>：负责人和老师提供课件、论文、标准原文和真实拍摄素材。</li>
-      <li><strong>起草整理</strong>：团队把资料整理成课文、穴位知识或视频文案草稿。</li>
-      <li><strong>标注状态</strong>：没有经过专业老师确认的内容标“待审核”，文案草稿标“待负责人确认”。</li>
-      <li><strong>确认后更新</strong>：负责人确认、专业老师审核后，才改为正式内容；发现错误随时更正，并更新页面上的更新日期。</li>
+      <li><strong>资料进来</strong>：负责人和老师提供课件、标准原文、设备资料和真实拍摄素材。</li>
+      <li><strong>整理成稿</strong>：团队把资料整理成穴位知识、设备资料或视频文案。</li>
+      <li><strong>负责人确认</strong>：内容在内部确认完成后才公开；文案草稿只在内部工作台，不对外显示。</li>
+      <li><strong>持续更新</strong>：新增穴位、视频、文案和设备资料，发现错误随时更正，并更新页面上的更新日期。</li>
     </ol>
-    <p class="small muted">发现内容有误，欢迎通过<a href={u('/feedback/')}>意见反馈</a>告诉我们。</p>
+
+    <PlatformMatrix compact headingLevel={2} />
+    <div style="margin:16px 0"><ContactBlock headingLevel={2} /></div>
+
     <h2>负责人</h2>
     <p>项目负责人：{site.owner}</p>
     <h2 id="privacy">隐私说明</h2>
@@ -63,11 +70,8 @@ import { u } from '../lib/url';
     <h3>其他</h3>
     <ul>
       <li>除上述复制次数统计外，本站目前没有接入任何访问统计、广告或第三方追踪代码，也不设置用户登录。</li>
-      <li>意见反馈如跳转到第三方表单，相关数据由该表单服务商按其隐私政策处理。</li>
+      <li>网站目前没有在线提交表单，不收集访客的个人信息。</li>
       <li>以后如增加其他统计，会在此处更新说明。</li>
     </ul>
-    {site.contact.email && <p>联系邮箱：{site.contact.email}</p>}
-    {site.contact.wechatOfficialAccount && <p>微信公众号：{site.contact.wechatOfficialAccount}</p>}
-    <p><a href={u('/feedback/')}>意见反馈 →</a></p>
   </div>
 </Base>

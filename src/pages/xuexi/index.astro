@@ -48,13 +48,13 @@ const totalMin = lessons.reduce((n, l) => n + (l.minutes || 0), 0);
           <div class="lp-body">
             <h2><a href={u(`/xuexi/${l.slug}/`)}>{l.title}</a></h2>
             <p>{l.description}</p>
-            <div class="update-meta"><span class="badge badge-gray" data-lp-status={l.slug}>未学</span><span class="badge badge-gray">约 {l.minutes} 分钟</span>{l.reviewStatus !== '已审核' && <span class="badge badge-warn">{l.reviewStatus}</span>}</div>
+            <div class="update-meta"><span class="badge badge-gray" data-lp-status={l.slug}>未学</span><span class="badge badge-gray">约 {l.minutes} 分钟</span></div>
           </div>
         </li>
       ))}
     </ol>
 
-    <p class="notice">学习路径的课文为团队整理的科普内容，专业内容待老师审核。皮穿支与腧穴的对应关系仍在研究中，本站不把它写成已证实的结论；内容不构成诊断或治疗建议。</p>
+    <p class="small muted">皮穿支与腧穴的对应关系仍在持续研究中，课文按“解剖事实”和“研究进展”分开讲。</p>
     <p class="small muted">想按日期看新内容，可以去<a href={u('/learning/today/')}>今日学习</a>；想查具体穴位，可以去<a href={u('/xuewei/')}>穴位知识库</a>。</p>
   </div>
   <LessonProgress />

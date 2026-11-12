@@ -8,7 +8,7 @@ const all = getAcupoints();
 const uniq = (a: string[]) => Array.from(new Set(a.filter(Boolean)));
 const dates = uniq(entries.map((e) => e.date));
 const types = uniq(entries.map((e) => e.type));
-const teachers = uniq(entries.flatMap((e) => e.teachers || []));
+const teachers = uniq(entries.flatMap((e) => (e.teachers || []).filter((t) => t && !/^待/.test(t))));
 const pointNames = uniq(entries.flatMap((e) => (e.acupoints || []).map((s) => all.find((p: any) => p.slug === s)?.name)));
 const meridians = uniq(entries.flatMap((e) => (e.acupoints || []).map((s) => all.find((p: any) => p.slug === s)?.meridian)));
 ---

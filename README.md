@@ -497,3 +497,11 @@ GitHub 用来保存网站的所有文件和每一次修改记录，并自动生�
 | `src/components/CopyRuntime.astro` | 网页端复制、计数、重试、排序 |
 | `src/pages/admin/stats.astro` | 管理员统计页 |
 | `scripts/test-stats.mjs` | 复制统计验收测试 |
+
+## V3.3 配置说明（官方平台、联系方式、团队、动态文案）
+
+- **官方平台 / 关注我们**：`src/content/platforms.json`。每个账号有 platform、accountName、owner、bio、homeUrl、qrImage、searchHint、visible、sortOrder。只有 `visible: true` 且有真实主页链接、二维码或搜索提示的账号才会显示；二维码图片放在 `public/images/platforms/`。
+- **联系陈老师**：`src/config/site.json` 的 `contact`（wechatId、wechatQr、groupQr、groupUrl、email）。留空的不显示；二维码放在 `public/images/contact/`。网站没有在线提交表单。
+- **团队**：`src/content/team.json`，新增老师在 `teachers` 里加一项即可，人数不固定。
+- **工作台文案**：每条视频的组数不固定（3、8、20、30 组都可以）；每组的标题、视频描述、关键词、话题标签都是可选的，另可加 `extras: [{ id, label, text }]` 作为其他可选文案。空字段不显示。`npm run test:workbench` 会模拟 3 组、24 组和缺字段的组做浏览器复制测试。
+- **公开页面不显示内部审核状态**：穴位、课程、设备等 JSON 里的 `reviewStatus`、`reviewer` 只在 `/teacher/shenhe/` 等内部页面使用；作者 `author` 只有填写真实姓名时才在穴位页显示。

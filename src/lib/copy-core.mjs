@@ -7,6 +7,10 @@
 //         { id: "g2", no: 2, ... }, ...   ← 组数不固定，6 组、8 组、10 组都可以
 //     ] }
 //   ]
+// - 组数完全不固定：这次 3 组、下次 8 组、20 组、30 组都可以，页面和统计按实际组数生成，没有上限。
+// - 每组里的字段都是可选的（标题 title、视频描述 description、关键词 keywords、话题标签 hashtags、
+//   其他可选文案 extras: [{ id: "cover", label: "封面文字", text: "..." }]），但每组至少要有一项内容。
+//   没填的字段不显示、不生成复制按钮，也不要求每次填满。
 // - keywords 可以是一整串文字（例如负责人给的 "#a #b #c"，按原样复制），也可以是数组（用顿号连接）。
 // - angle（角度说明）、hashtags（话题标签）都是可选的，没有就不显示。
 //   （一个穴位可以有多条视频，每条视频一个 copySet）
@@ -62,12 +66,24 @@ export function validateCopies(acupoint) {
       if (!Number.isInteger(v.no) || v.no < 1) problems.push(`${vl} 的编号 no 应为 1、2、3 这样的正整数`);
       if (nos.has(v.no)) problems.push(`${vl} 的编号 no 与其他组重复`);
       nos.add(v.no);
-      if (!v.title || !String(v.title).trim()) problems.push(`${vl} 缺少标题`);
-      if (!v.description || !String(v.description).trim()) problems.push(`${vl} 缺少描述`);
-      if (!keywordsText(v).trim()) problems.push(`${vl} 缺少关键词`);
+      const ex = extrasOf(v);
+      if (v.extras !== undefined && !Array.isArray(v.extras)) problems.push(`${vl} 的 extras（其他可选文案）应写成数组`);
+      const exIds = new Set();
+      for (const e of ex) {
+        if (!e.id || !ID_RE.test(e.id)) problems.push(`${vl} 的其他文案 id（${e.id || '无'}）只能使用小写字母、数字和短横线`);
+        if (exIds.has(e.id)) problems.push(`${vl} 的其他文案 id（${e.id}）重复`);
+        exIds.add(e.id);
+      }
+      const hasAny = [v.title, v.description, keywordsText(v), hashtagsText(v), ...ex.map((e) => e.text)].some((t) => String(t ?? '').trim());
+      if (!hasAny) problems.push(`${vl} 一项内容都没有（标题、描述、关键词、话题标签、其他文案至少填一项）`);
     }
   });
   return problems;
+}
+
+/** 每组的“其他可选文案”（封面文字、置顶评论等），只保留有内容的项 */
+export function extrasOf(copy) {
+  return (Array.isArray(copy.extras) ? copy.extras : []).filter((e) => e && String(e.text ?? '').trim());
 }
 
 export function keywordsText(copy, settings) {
@@ -80,15 +96,14 @@ export function hashtagsText(copy, settings) {
 
 /** 一组文案的全部内容（标题 + 描述 + 关键词 + 话题标签） */
 export function variantBlockText(acupoint, set, v, settings) {
-  const lines = [
-    `【第 ${v.no} 组${v.angle ? `｜${v.angle}` : ''}】${acupoint.displayName}`,
-    `标题：${v.title}`,
-    `描述：`,
-    v.description,
-    `关键词：${keywordsText(v, settings)}`,
-  ];
+  const lines = [`【第 ${v.no} 组${v.angle ? `｜${v.angle}` : ''}】${acupoint.displayName}`];
+  if (v.title) lines.push(`标题：${v.title}`);
+  if (v.description) lines.push(`描述：`, v.description);
+  const kw = keywordsText(v, settings);
+  if (kw) lines.push(`关键词：${kw}`);
   const tags = hashtagsText(v, settings);
   if (tags) lines.push(`话题标签：${tags}`);
+  for (const e of extrasOf(v)) lines.push(`${e.label || '其他文案'}：`, e.text);
   return lines.join('\n');
 }
 
@@ -104,10 +119,14 @@ export function buildCopyMap(acupoint, settings) {
   for (const set of getSets(acupoint)) {
     for (const v of set.variants) {
       const k = variantKey(set.id, v.id);
-      map[`title:${k}`] = v.title;
-      map[`description:${k}`] = v.description;
-      map[`keywords:${k}`] = keywordsText(v, settings);
-      map[`hashtags:${k}`] = hashtagsText(v, settings);
+      // 只为有内容的字段生成复制项（空字段不显示按钮）
+      if (v.title) map[`title:${k}`] = v.title;
+      if (v.description) map[`description:${k}`] = v.description;
+      const kw = keywordsText(v, settings);
+      if (kw) map[`keywords:${k}`] = kw;
+      const tags = hashtagsText(v, settings);
+      if (tags) map[`hashtags:${k}`] = tags;
+      for (const e of extrasOf(v)) map[`extra-${e.id}:${k}`] = e.text;
       map[`group:${k}`] = variantBlockText(acupoint, set, v, settings);
     }
     map[`set:${set.id}`] = setBundleText(acupoint, set, settings);
@@ -167,9 +186,10 @@ export function buildCopyItems(acupoint, settings) {
       const k = variantKey(set.id, v.id);
       const ver = v.versions || {};
       const memberIds = [];
-      for (const type of COPY_TYPES) {
+      const types = [...COPY_TYPES, ...extrasOf(v).map((e) => `extra-${e.id}`)];
+      for (const type of types) {
         const text = map[`${type}:${k}`] || '';
-        if (type === 'hashtags' && !text) continue;
+        if (!text) continue; // 空字段不统计
         const id = contentItemId(slug, set.id, v.id, type, ver[type] || 1);
         memberIds.push(id);
         items.push({ id, acupoint: slug, accountId: set.id, setId: set.id, type, variant: v.id, no: v.no, version: ver[type] || 1, hash: textHash(text), preview: text.slice(0, 80), copyKey: `${type}:${k}` });

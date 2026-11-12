@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateCopies } from '../src/lib/copy-core.mjs';
 import { forbiddenHits } from '../src/lib/draft-core.mjs';
+import { validatePlatforms } from '../src/lib/platform-core.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const C = (p) => path.join(root, 'src/content', p);
@@ -74,6 +75,9 @@ for (const f of fs.readdirSync(C('learning')).filter((f) => f.endsWith('.json'))
   for (const s of e.acupoints || []) if (!slugs.has(s)) errors.push(`学习内容 ${f} 引用了不存在的穴位 "${s}"`);
 }
 readJson(C('equipment/device.json'));
+const plat = readJson(C('platforms.json'));
+if (plat) for (const p of validatePlatforms(plat)) errors.push(`官方平台配置 platforms.json：${p}`);
+readJson(C('team.json'));
 readJson(path.join(root, 'src/config/site.json'));
 
 for (const w of warnings) console.warn(`⚠️  提醒：${w}`);

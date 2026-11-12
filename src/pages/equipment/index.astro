@@ -2,44 +2,88 @@
 import QuickAnswer from '../../components/QuickAnswer.astro';
 import Base from '../../layouts/Base.astro';
 import UpdateList from '../../components/UpdateList.astro';
-import ReviewBadge from '../../components/ReviewBadge.astro';
 import { equipment, getAcupointsOrdered, getLearning, siteUrl, site } from '../../lib/data';
 import { u } from '../../lib/url';
 const eq: any = equipment;
 const points = getAcupointsOrdered();
 const entries = getLearning().filter((e) => e.type === '设备演示');
 const jsonLd = { '@context': 'https://schema.org', '@type': 'Product', name: '皮门多普勒', description: eq.intro, brand: { '@type': 'Brand', name: site.brand }, url: siteUrl() + '/equipment/' };
+const tech = [
+  { id: 'specs', title: '当前版本的功能与技术参数', items: eq.specs || [] },
+  { id: 'tests', title: '当前版本的实际测试数据', items: eq.testData || [] },
+  { id: 'notes', title: '研发团队最新技术说明', items: eq.teamNotes || [] },
+];
+const techEmpty = tech.every((t) => t.items.length === 0);
+const testFields = [['version', '设备版本'], ['conditions', '测试条件'], ['error', '定位误差'], ['repeatability', '重复性'], ['scope', '适用范围'], ['source', '资料来源'], ['date', '测试日期']];
+const hasMedia = eq.photos.length > 0 || eq.videos.length > 0;
 ---
-<Base title="皮门多普勒：丁志伟老师研发的穴位定位设备" path="/equipment/" jsonLd={jsonLd} description="皮门多普勒是丁志伟老师研发的穴位定位设备，经过多代改进，定位操作快速、精细。本页介绍设备用途、外观、操作流程、设备迭代、配套培训，以及设备咨询方式。" keywords={['皮门多普勒', '皮门', '丁志伟', '穴位定位设备', '多普勒', '皮穿支', '皮穿支针刺培训', '设备咨询', '身体里的科学']}>
+<Base title="皮门多普勒：丁志伟老师研发的穴位定位设备" path="/equipment/" jsonLd={jsonLd} description="皮门多普勒是丁志伟老师研发的穴位定位设备，经过多代改进，定位操作快速、精细。本页介绍当前版本、实际操作过程、设备迭代、配套的皮穿支针刺培训和相关研究背景。" keywords={['皮门多普勒', '皮门', '丁志伟', '穴位定位设备', '多普勒', '皮穿支', '皮穿支针刺培训', '身体里的科学']}>
   <div class="container">
     <div class="breadcrumb"><a href={u('/')}>首页</a> › 皮门多普勒</div>
     <h1>{eq.title}：{eq.subtitle}</h1>
-    <div class="detail-meta"><ReviewBadge status={eq.reviewStatus} /><span class="small muted">更新时间：{eq.updateDate}</span></div>
-    <p>{eq.intro}</p>
+    <p class="small muted">更新时间：{eq.updateDate}</p>
+    <p class="lead">{eq.intro}</p>
     <ul class="eq-highlights">{eq.highlights.map((h: string) => <li>{h}</li>)}</ul>
     <div class="cta-row" style="margin:14px 0">
-      <a class="btn btn-lg" href={u('/contact/device/')}>设备咨询</a>
-      <a class="btn btn-lg btn-outline" href={u('/training/')}>皮穿支针刺培训</a>
+      <a class="btn btn-lg" href={u('/training/')}>了解皮穿支针刺培训</a>
+      <a class="btn btn-lg btn-outline" href={u('/contact/device/')}>设备咨询与合作</a>
     </div>
-    <nav class="toc" aria-label="本页目录"><a href="#look">设备外观</a><a href="#steps">怎么操作</a><a href={u('/equipment/history/')}>设备迭代</a><a href="#training">配套培训</a><a href="#demos">各穴位定位演示</a><a href="#research">相关研究与背景</a></nav>
+    <nav class="toc" aria-label="本页目录"><a href="#current">当前版本</a><a href="#steps">实际操作过程</a><a href="#media">操作演示</a><a href="#tech">技术资料</a><a href="#history">设备迭代</a><a href="#training">配套培训</a><a href="#research">相关研究与背景</a></nav>
     <QuickAnswer ids={['pimen']} links={false} />
 
-    <section class="detail-section" id="look">
-      <h2>设备外观</h2>
+    <section class="detail-section" id="current">
+      <h2>{eq.currentVersion.title}</h2>
+      <p>{eq.currentVersion.text}</p>
+      <h3>设备外观</h3>
       <p>{eq.appearance.text}</p>
       <div class="table-wrap"><table><thead><tr><th>部件</th><th>说明</th></tr></thead><tbody>{eq.appearance.parts.map((x: any) => <tr><td>{x.name}</td><td>{x.desc}</td></tr>)}</tbody></table></div>
-      {eq.photos.length > 0 ? (
-        <div class="grid grid-2" style="margin-top:12px">{eq.photos.map((ph: any) => <figure style="margin:0"><img src={u(ph.src)} alt={ph.alt} loading="lazy" /><figcaption class="small muted">{ph.caption || ph.alt}</figcaption></figure>)}</div>
-      ) : <div class="placeholder" style="margin-top:12px"><strong>设备照片：</strong>{eq.appearance.photoStatus}</div>}
     </section>
 
     <section class="detail-section" id="steps">
-      <h2>怎么操作</h2>
+      <h2>实际操作过程</h2>
+      <p class="small muted">探头怎么移动、信号怎么变化、在哪里标记：</p>
       <ol>{eq.operationSteps.map((s: string) => <li>{s}</li>)}</ol>
-      <div class="placeholder">{eq.soundDemo}</div>
     </section>
 
-    <section class="detail-section">
+    <section class="detail-section" id="media">
+      <h2>真实操作演示</h2>
+      {hasMedia ? (
+        <div class="grid grid-2">
+          {eq.photos.map((ph: any) => <figure style="margin:0"><img src={u(ph.src)} alt={ph.alt} loading="lazy" /><figcaption class="small muted">{ph.caption || ph.alt}</figcaption></figure>)}
+          {eq.videos.map((v: any) => <a class="card" href={v.url} target="_blank" rel="noopener">▶ {v.title}</a>)}
+        </div>
+      ) : (
+        <div class="placeholder"><strong>素材待提供：</strong>设备照片、操作视频和提示音录音由丁志伟老师团队提供后在这里展示。本站只用真实拍摄的素材，不用 AI 生成的设备图片或声音。</div>
+      )}
+      <h3>各穴位定位演示</h3>
+      {points.some((p: any) => p.dopplerDemo.videos?.length) ? (
+        <div class="table-wrap"><table><thead><tr><th>穴位</th><th>经络</th><th>演示视频</th></tr></thead><tbody>
+          {points.filter((p: any) => p.dopplerDemo.videos?.length).map((p: any) => <tr><td><a href={u(`/xuewei/${p.slug}/#doppler`)}>{p.displayName}</a></td><td>{p.meridian}</td><td>{p.dopplerDemo.videos.length} 个视频</td></tr>)}
+        </tbody></table></div>
+      ) : (
+        <p>各穴位的定位演示会放在对应穴位页：{points.map((p: any, i: number) => <>{i > 0 && '、'}<a href={u(`/xuewei/${p.slug}/#doppler`)}>{p.displayName}</a></>)}。</p>
+      )}
+      {entries.length > 0 && <><h3>演示更新记录</h3><UpdateList entries={entries} showDate /></>}
+    </section>
+
+    <section class="detail-section" id="tech">
+      <h2>当前版本技术资料</h2>
+      <p class="small muted">当前设备的性能以丁志伟老师及研发团队提供的最新资料为准，包括测试条件、定位误差、重复性和适用范围。</p>
+      {techEmpty ? (
+        <div class="placeholder"><strong>素材待提供：</strong>当前版本的功能与技术参数、实际测试数据和研发团队最新技术说明，由丁志伟老师团队提供后在这里发布。</div>
+      ) : tech.filter((t) => t.items.length > 0).map((t) => (
+        <div data-tech={t.id}>
+          <h3>{t.title}</h3>
+          {t.id === 'tests' ? t.items.map((x: any) => (
+            <div class="card" style="margin:8px 0"><strong>{x.title}</strong>
+              <dl class="info small">{testFields.filter(([k]) => x[k]).map(([k, label]) => <><dt>{label}</dt><dd>{x[k]}</dd></>)}</dl>
+            </div>
+          )) : <ul>{t.items.map((x: any) => <li>{typeof x === 'string' ? x : <><strong>{x.name || x.title}</strong>{(x.value || x.text) && <>：{x.value || x.text}</>}</>}</li>)}</ul>}
+        </div>
+      ))}
+    </section>
+
+    <section class="detail-section" id="history">
       <h2>设备迭代与技术发展</h2>
       <p>皮门多普勒经过多代改进。各代设备的外观、主机、探头、信号和操作流程变化，整理在设备迭代页。</p>
       <p><a class="btn btn-outline" href={u('/equipment/history/')}>查看设备迭代 →</a></p>
@@ -48,27 +92,13 @@ const jsonLd = { '@context': 'https://schema.org', '@type': 'Product', name: '�
     <section class="detail-section" id="training">
       <h2>{eq.training.title}</h2>
       <p>{eq.training.text}</p>
-      <p class="notice notice-info">{eq.training.status}</p>
-      <div class="cta-row"><a class="btn" href={u('/training/')}>看培训介绍</a><a class="btn btn-outline" href={u('/contact/training/')}>培训咨询</a></div>
-    </section>
-
-    <section class="detail-section" id="demos">
-      <h2>各穴位定位演示</h2>
-      <div class="table-wrap"><table><thead><tr><th>穴位</th><th>经络</th><th>演示素材</th></tr></thead><tbody>
-        {points.map((p: any) => <tr><td><a href={u(`/xuewei/${p.slug}/#doppler`)}>{p.displayName}</a></td><td>{p.meridian}</td><td>{p.dopplerDemo.videos?.length ? `${p.dopplerDemo.videos.length} 个视频` : '待提供'}</td></tr>)}
-      </tbody></table></div>
-      {eq.videos.length > 0 && <ul>{eq.videos.map((v: any) => <li><a href={v.url} target="_blank" rel="noopener">{v.title}</a></li>)}</ul>}
-      {entries.length > 0 && <><h3>演示更新记录</h3><UpdateList entries={entries} showDate /></>}
-    </section>
-
-    <section class="detail-section">
-      <h2>待补充的设备资料</h2>
-      <ul>{eq.pending.map((m: string) => <li>{m}</li>)}</ul>
+      <p class="small muted">{eq.training.status}</p>
+      <div class="cta-row"><a class="btn" href={u('/training/')}>看小课与大课</a><a class="btn btn-outline" href={u('/contact/training/')}>培训咨询</a></div>
     </section>
 
     <section class="detail-section" id="research">
       <h2>相关研究与背景</h2>
-      <p class="small muted">以下是皮穿支方向的专利和早期研究，作为技术背景参考；当前设备以丁老师团队提供的最新资料为准。</p>
+      <p class="small muted">以下是皮穿支方向的专利和早期研究，作为技术背景参考。早期论文和网络资料可能对应早期研究或旧版本设备，不代表当前设备的性能；当前设备以丁老师团队提供的最新资料为准。</p>
       {eq.research.map((r: any) => (
         <div style="margin:10px 0">
           <h3 style="margin:0 0 4px;font-size:1rem">{r.title}</h3>
@@ -79,9 +109,9 @@ const jsonLd = { '@context': 'https://schema.org', '@type': 'Product', name: '�
     </section>
 
     <section class="consult-strip" style="margin-top:24px">
-      <h2>想了解或采购皮门多普勒？</h2>
-      <p>设备演示、采购和培训安排，具体请咨询。</p>
-      <div class="cta-row" style="justify-content:center"><a class="btn" href={u('/contact/device/')}>设备咨询</a><a class="btn btn-outline" href={u('/contact/training/')}>培训咨询</a></div>
+      <h2>想深入了解皮门多普勒？</h2>
+      <p>建议先了解皮穿支针刺培训；设备演示、采购与合作也可以直接咨询。</p>
+      <div class="cta-row" style="justify-content:center"><a class="btn" href={u('/contact/training/')}>培训咨询</a><a class="btn btn-outline" href={u('/contact/device/')}>设备咨询</a></div>
     </section>
     <p class="page-foot-note">{eq.footnote}</p>
   </div>

@@ -6,7 +6,7 @@
   "brand": "身体里的科学",
   "slogan": "探索人体奥秘，发现生命科学。",
   "homeTitle": "皮穿支",
-  "homeSubtitle": "丁志伟老师研发的皮门多普勒穴位定位设备，配套皮穿支针刺培训。全国医生、老师每天分享穴位定位和设备实操。",
+  "homeSubtitle": "以人体穴位知识为入口，以皮门多普勒真实定位演示为特色，丁志伟老师大课、牛老师小课组成皮穿支针刺培训体系，全国医生和老师共同分享。",
   "owner": "陈宇明（陈老师）",
   "_siteUrl说明": "正式域名确定后，把下面的 siteUrl 改成自己的域名（例如 https://www.你的域名.com），不要以 / 结尾。也可以在部署平台设置环境变量 SITE_URL 覆盖它。在填入真实域名之前，网站内的规范网址（canonical）和站点地图会使用这个占位地址。",
   "siteUrl": "https://pimen.cc",
@@ -18,22 +18,29 @@
     "yanglingquan"
   ],
   "feedback": {
-    "_说明": "反馈入口设置。formUrl 填外部表单地址（如腾讯问卷、金数据、飞书表单等）；groupUrl 填工作群二维码页面或群链接（可选）。留空时，网站会显示“尚未设置”的提示，并提供一段可复制的反馈模板，老师可以直接发到工作群。",
+    "_说明": "反馈入口设置。formUrl 只在以后接入真实可保存的在线表单（如腾讯问卷、金数据、飞书表单）时填写；留空时页面只显示联系陈老师的方式和可复制的反馈模板，不显示任何表单。",
     "formUrl": "",
     "formButtonText": "提交意见或建议",
     "groupUrl": "",
     "groupButtonText": "前往工作群",
-    "groupNote": "也可以直接在「身体里的科学」工作群里 @陈老师 反馈。"
+    "groupNote": "也可以直接在「身体里的科学」工作群里 @陈老师。"
   },
   "seo": {
     "_说明": "搜索引擎验证码。在 Google Search Console 或百度搜索资源平台选择“HTML 标签验证”后，把 content=\"...\" 引号里的那串字符填到这里即可。留空则不输出。",
     "googleSiteVerification": "",
     "baiduSiteVerification": "",
-    "defaultDescription": "皮穿支 - 身体里的科学：丁志伟老师研发的皮门多普勒穴位定位设备与皮穿支针刺培训官方网站，提供设备介绍、设备迭代、培训介绍、设备咨询与培训咨询，以及皮穿支学习路径和全身穴位知识库。",
+    "defaultDescription": "皮穿支 - 身体里的科学：丁志伟老师研发的皮门多普勒穴位定位设备、皮穿支针刺培训（牛老师小课、丁志伟老师大课）、人体穴位知识中心与官方新媒体平台。",
     "defaultOgImage": "/images/brand/og-default.png"
   },
   "contact": {
-    "_说明": "对外联系方式（可选）。没有就留空，页面不会显示。",
+    "_说明": "联系方式。只填写真实资料；留空的项目不会在页面上显示。二维码图片放到 public/images/contact/ 后填写路径，例如 /images/contact/chen-wechat.png。",
+    "contactPerson": "陈老师",
+    "note": "如有内容建议、合作咨询或其他问题，请联系陈老师。",
+    "wechatId": "",
+    "wechatQr": "",
+    "groupName": "身体里的科学工作群",
+    "groupQr": "",
+    "groupUrl": "",
     "email": "",
     "wechatOfficialAccount": ""
   },

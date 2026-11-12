@@ -1,0 +1,35 @@
+---
+import Base from '../../layouts/Base.astro';
+import ContactBlock from '../../components/ContactBlock.astro';
+import PlatformMatrix from '../../components/PlatformMatrix.astro';
+import { site } from '../../lib/data';
+import { u } from '../../lib/url';
+---
+<Base title="联系我们：培训咨询、合作与内容建议" path="/contact/" description={`联系「${site.brand}」：皮穿支针刺培训咨询、皮门多普勒设备合作、内容建议，请联系项目负责人陈老师。`} keywords={['联系我们', '培训咨询', '皮穿支针刺培训', '皮门多普勒', '陈老师', site.brand]}>
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 联系我们</div>
+    <h1>联系我们</h1>
+    <p>想了解皮穿支针刺培训、皮门多普勒设备，或者对网站内容有建议，都可以直接联系项目负责人陈老师。</p>
+    <ContactBlock />
+
+    <div class="biz-grid" style="margin-top:16px">
+      <article class="biz-card">
+        <h2>了解培训 / 课程咨询</h2>
+        <p>牛老师小课（基础教学）和丁志伟老师大课（核心技术）。开课时间、地点和费用，具体安排请咨询。</p>
+        <div class="cta-row"><a class="btn" href={u('/contact/training/')}>培训咨询</a><a class="btn btn-outline" href={u('/training/')}>看培训介绍</a></div>
+      </article>
+      <article class="biz-card">
+        <h2>设备了解与合作</h2>
+        <p>皮门多普勒设备的演示、采购和后续合作。</p>
+        <div class="cta-row"><a class="btn btn-outline" href={u('/contact/device/')}>设备咨询</a><a class="btn btn-outline" href={u('/equipment/')}>看设备介绍</a></div>
+      </article>
+      <article class="biz-card">
+        <h2>内容建议与纠错</h2>
+        <p>文案修改建议、穴位知识纠错、想增加的内容，可复制反馈模板发给陈老师。</p>
+        <div class="cta-row"><a class="btn btn-outline" href={u('/feedback/')}>内容建议</a></div>
+      </article>
+    </div>
+
+    <PlatformMatrix compact />
+  </div>
+</Base>

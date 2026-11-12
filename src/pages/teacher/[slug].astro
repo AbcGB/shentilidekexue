@@ -3,7 +3,7 @@ import Base from '../../layouts/Base.astro';
 import CopyRuntime from '../../components/CopyRuntime.astro';
 import ReviewBadge from '../../components/ReviewBadge.astro';
 import { getWorkbenchAcupoints, copySettings, site } from '../../lib/data';
-import { getSets, buildCopyMap, keywordsText, hashtagsText, buildCopyItems, variantKey, longCopyOf } from '../../lib/copy-core.mjs';
+import { getSets, buildCopyMap, keywordsText, hashtagsText, buildCopyItems, variantKey, longCopyOf, extrasOf } from '../../lib/copy-core.mjs';
 import { u } from '../../lib/url';
 
 export function getStaticPaths() {
@@ -19,18 +19,24 @@ const idByKey = Object.fromEntries(items.map((it: any) => [it.copyKey, it.id]));
 const statsCfg = { enabled: site.stats?.enabled !== false, apiBase: site.stats?.apiBase || '/api', acupoint: p.slug };
 const fields = [
   { key: 'title', label: '标题', btn: '复制标题', text: (v: any) => v.title },
-  { key: 'description', label: '描述', btn: '复制描述', text: (v: any) => v.description },
+  { key: 'description', label: '视频描述', btn: '复制描述', text: (v: any) => v.description },
   { key: 'keywords', label: '关键词', btn: '复制关键词', text: (v: any) => keywordsText(v, copySettings) },
   { key: 'hashtags', label: '话题标签', btn: '复制话题', text: (v: any) => hashtagsText(v, copySettings) },
 ];
+// 每组实际要显示的字段：固定字段里有内容的 + 这组的“其他可选文案”。空字段不显示。
+const fieldsOf = (v: any) => [
+  ...fields.filter((f) => f.text(v)),
+  ...extrasOf(v).map((e: any) => ({ key: `extra-${e.id}`, label: e.label || '其他文案', btn: `复制${e.label || '文案'}`, text: () => e.text })),
+];
+const totalGroups = sets.reduce((n: number, s: any) => n + s.variants.length, 0);
 ---
-<Base title={`${p.displayName} · ${main.variants.length} 组视频文案（老师工作台）`} path={`/teacher/${p.slug}/`} noindex description="内部使用的发布文案工作台。">
+<Base title={`${p.displayName} · ${totalGroups} 组视频文案（老师工作台）`} path={`/teacher/${p.slug}/`} noindex description="内部使用的发布文案工作台。">
   <div class="container">
     <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/teacher/')}>老师工作台</a> › {p.displayName}</div>
-    <h1>{p.displayName} · {main.variants.length} 组视频文案</h1>
+    <h1>{p.displayName} · {totalGroups} 组视频文案</h1>
     <p class="muted small">{p.meridian} · 文案更新：{p.updateDate} · 穴位资料：<a href={u(`/xuewei/${p.slug}/`)}>查看公开页面</a></p>
     <p class="notice"><strong>{p.copyStatus || '请人工确认后再发布'}。</strong>标题、描述、关键词按负责人提供的原文录入，复制到的就是原文；穴位知识状态：<ReviewBadge status={p.reviewStatus} />。</p>
-    <p class="small muted">用法：同一条视频，每位老师挑<strong>一组</strong>发布，标题、描述、关键词可以单独复制，也可以整组复制。大家尽量发不同的组（优先挑复制次数少的），搜索时能覆盖更多问法，也避免很多账号发同一句话。</p>
+    <p class="small muted">用法：同一条视频，每位老师挑<strong>一组</strong>发布，标题、视频描述、关键词、话题标签可以分别复制；复制整组是辅助功能。每组字段数量不固定，没提供的字段不显示。大家尽量发不同的组（优先挑复制次数少的），搜索时能覆盖更多问法，也避免很多账号发同一句话。</p>
     <p class="small muted" id="stats-status">复制次数为全站老师共享的匿名统计（不记录是谁复制），正在读取统计…</p>
 
     {sets.map((set: any, si: number) => (
@@ -59,7 +65,8 @@ const fields = [
         <div class="wb-cards" data-cards={set.id}>
           {set.variants.map((v: any) => {
             const k = variantKey(set.id, v.id);
-            const members = fields.map((f) => idByKey[`${f.key}:${k}`]).filter(Boolean);
+            const vf = fieldsOf(v);
+            const members = vf.map((f) => idByKey[`${f.key}:${k}`]).filter(Boolean);
             return (
               <article class="wb-group wb-card" data-variant={v.id} data-index={v.no} data-members={members.join(' ')}>
                 <div class="wb-head">
@@ -69,7 +76,7 @@ const fields = [
                     <div class="wb-stat" data-stat-for={idByKey[`group:${k}`]}>整组 累计 <b data-t>–</b> 次 · 近7天 <b data-d7>–</b> 次</div>
                   </div>
                 </div>
-                {fields.map((f) => {
+                {vf.map((f) => {
                   const text = f.text(v);
                   const itemId = idByKey[`${f.key}:${k}`];
                   if (!text) return null;

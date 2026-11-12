@@ -4,143 +4,124 @@ import Base from '../layouts/Base.astro';
 import Search from '../components/Search.astro';
 import UpdateList from '../components/UpdateList.astro';
 import PointCard from '../components/PointCard.astro';
-import { site, getAcupoints, getAcupointsOrdered, getLearning, latestDate, equipment, training, siteUrl, getLessons } from '../lib/data';
-import LessonProgress from '../components/LessonProgress.astro';
+import PlatformMatrix from '../components/PlatformMatrix.astro';
+import ContactBlock from '../components/ContactBlock.astro';
+import { site, getAcupoints, getAcupointsOrdered, getLearning, latestDate, equipment, training, team, siteUrl, getLessons } from '../lib/data';
 import { u } from '../lib/url';
 
 const points = getAcupoints();
 const latest = latestDate();
 const learning = getLearning();
-const todays = learning.filter((e) => e.date === latest);
-const newest = [...getAcupointsOrdered()].sort((a, b) => (b.publishDate || '').localeCompare(a.publishDate || '')).slice(0, 6);
+const todays = learning.filter((e) => e.date === latest).slice(0, 4);
+const ordered = getAcupointsOrdered();
 const hot = site.hotAcupoints.map((s: string) => points.find((p: any) => p.slug === s)).filter(Boolean);
-const deviceEntries = learning.filter((e) => e.type === '设备演示').slice(0, 3);
-const materials = learning.filter((e) => e.type === '学习资料').slice(0, 4);
 const lessons = getLessons();
-const lessonOrder = lessons.map((l) => ({ slug: l.slug, title: l.title, href: u(`/xuexi/${l.slug}/`) }));
+const t: any = training;
+const tm: any = team;
 const jsonLd = { '@context': 'https://schema.org', '@graph': [
   { '@type': 'WebSite', name: site.siteName, alternateName: site.brand, url: siteUrl() + '/', description: site.seo.defaultDescription, inLanguage: 'zh-CN' },
   { '@type': 'Organization', name: site.brand, alternateName: site.siteName, url: siteUrl() + '/', slogan: site.slogan },
 ] };
 ---
-<Base title={site.siteName} fullTitle path="/" jsonLd={jsonLd} keywords={['皮门多普勒', '皮穿支针刺培训', '皮穿支', '丁志伟', '穴位定位设备', '身体里的科学', '中西医之桥', '穴位定位']}>
+<Base title={site.siteName} fullTitle path="/" jsonLd={jsonLd} keywords={['身体里的科学', '皮穿支', '皮门多普勒', '皮穿支针刺培训', '丁志伟', '牛老师', '人体穴位', '穴位定位演示', '中西医之桥']}>
   <section class="hero">
     <div class="container">
-      <p class="brand-line">{site.brand} · {site.slogan}</p>
+      <p class="brand-line">{site.slogan}</p>
       <h1>{site.homeTitle}<span class="hero-brand"> - {site.brand}</span></h1>
       <p class="subtitle">{site.homeSubtitle}</p>
       <div class="hero-cta">
-        <a class="btn btn-lg" href={u('/equipment/')}>了解皮门多普勒设备</a>
-        <a class="btn btn-lg" href={u('/training/')}>皮穿支针刺培训</a>
-      </div>
-      <div class="hero-consult">
-        <a class="btn btn-outline" href={u('/contact/device/')}>设备咨询</a>
-        <a class="btn btn-outline" href={u('/contact/training/')}>培训咨询</a>
+        <a class="btn btn-lg btn-primary-cta" href={u('/contact/training/')}>了解培训 / 课程咨询</a>
+        <a class="btn btn-lg btn-outline" href={u("/equipment/")}>皮门多普勒设备</a>
       </div>
       <Search mode="live" />
       <nav class="quick" aria-label="快捷入口">
+        <a href={u('/xuewei/')}><span class="ico">穴</span>穴位知识</a>
         <a href={u('/equipment/')}><span class="ico">门</span>皮门多普勒</a>
         <a href={u('/training/')}><span class="ico">训</span>针刺培训</a>
-        <a href={u('/xuewei/')}><span class="ico">穴</span>穴位知识库</a>
-        <a href={u('/teacher/')}><span class="ico">✎</span>老师工作台</a>
+        <a href={u('/platforms/')}><span class="ico">关</span>官方平台</a>
       </nav>
     </div>
   </section>
 
   <div class="container">
     <section>
+      <div class="section-head"><h2>我们在做什么</h2><a href={u('/about/')}>关于我们 →</a></div>
+      <QuickAnswer ids={['brand']} title="品牌简介" headingLevel={3} links={false} />
+    </section>
+
+    <section>
+      <div class="section-head"><h2>人体穴位知识中心</h2><a href={u('/xuewei/')}>全部穴位 →</a></div>
+      <p class="small muted">每个穴位一页：所属经络、标准定位、取穴方法、传统功能与主治和皮门多普勒定位演示，持续扩充到全身标准经穴。</p>
+      <div class="grid grid-3">{ordered.slice(0, 6).map((p) => <PointCard p={p} />)}</div>
+      {hot.length > 0 && <div class="toc" style="margin-top:10px">{hot.map((p: any) => <a href={u(`/xuewei/${p.slug}/`)}>{p.displayName} · {p.meridian}</a>)}</div>}
+    </section>
+
+    <section>
       <div class="biz-grid">
         <article class="biz-card">
           <h2>皮门多普勒设备</h2>
           <p>{equipment.intro}</p>
-          <ul class="eq-highlights">{(equipment as any).highlights.map((h: string) => <li>{h}</li>)}</ul>
+          <ul class="eq-highlights">{(equipment as any).highlights.slice(0, 3).map((h: string) => <li>{h}</li>)}</ul>
           <div class="cta-row">
-            <a class="btn" href={u('/equipment/')}>看设备介绍</a>
+            <a class="btn" href={u('/equipment/')}>设备中心</a>
             <a class="btn btn-outline" href={u('/equipment/history/')}>设备迭代</a>
             <a class="btn btn-outline" href={u('/contact/device/')}>设备咨询</a>
           </div>
         </article>
         <article class="biz-card" id="training">
-          <h2>{training.title}</h2>
-          <p>{training.intro}</p>
-          <ul class="eq-highlights">{training.modules.slice(0, 4).map((m: any) => <li><strong>{m.name}</strong>：{m.desc}</li>)}</ul>
+          <h2>{t.title}</h2>
+          <div class="course-mini">
+            {t.courses.map((c: any) => <div class="course-mini-item"><span class="course-tag">{c.name}</span><strong>{c.lead}</strong><span class="small muted">{c.focus}</span></div>)}
+          </div>
+          <p>以线下实操为主，团队根据各地区意向学员情况协调开课；时间、地点和费用具体安排请咨询。</p>
           <div class="cta-row">
-            <a class="btn" href={u('/training/')}>看培训介绍</a>
-            <a class="btn btn-outline" href={u('/contact/training/')}>培训咨询</a>
+            <a class="btn" href={u('/contact/training/')}>培训咨询</a>
+            <a class="btn btn-outline" href={u('/training/')}>看小课与大课</a>
           </div>
         </article>
       </div>
-      <p class="small muted" style="margin-top:8px">真实设备照片和操作视频由丁老师团队提供后补充。</p>
-      {deviceEntries.length > 0 && <UpdateList entries={deviceEntries} showDate />}
     </section>
 
     <section>
-      <div class="section-head"><h2>什么是皮穿支</h2><a href={u(`/xuexi/${lessons[0].slug}/`)}>读第 1 课 →</a></div>
-      <QuickAnswer ids={['definition', 'acupoints']} headingLevel={3} />
+      <div class="section-head"><h2>皮穿支技术</h2><a href={u('/xuexi/')}>皮穿支学习路径（{lessons.length} 课）→</a></div>
+      <QuickAnswer ids={['definition', 'acupoints']} title="什么是皮穿支" headingLevel={3} />
     </section>
 
     <section>
-      <div class="section-head"><h2>皮穿支学习路径</h2><a href={u('/xuexi/')}>全部 {lessons.length} 课 →</a></div>
-      <div data-lp-root data-lp-lessons={JSON.stringify(lessonOrder)} style="margin-bottom:10px"><a class="btn btn-outline" data-lp-continue href={u(`/xuexi/${lessons[0].slug}/`)}>从第 1 课开始</a></div>
-      <ol class="lp-list">
-        {lessons.map((l, i) => (
-          <li class="card lp-item">
-            <div class="lp-num">{i + 1}</div>
-            <div class="lp-body"><h3 style="margin:2px 0 4px"><a href={u(`/xuexi/${l.slug}/`)}>{l.title}</a></h3><p>{l.description}</p></div>
-          </li>
-        ))}
-      </ol>
-    </section>
-
-    <section>
-      <div class="section-head">
-        <h2>今日更新 <span class="small muted" data-today-label data-latest={latest}>（{latest}）</span></h2>
-        <a href={u('/learning/today/')}>查看今日学习 →</a>
+      <div class="section-head"><h2>丁志伟老师与专业团队</h2><a href={u('/about/#team')}>团队介绍 →</a></div>
+      <div class="grid grid-3">
+        {tm.core.map((m: any) => <div class="card team-card"><div class="course-tag">{m.role}</div><h3 style="margin:4px 0">{m.name}</h3><p style="margin:0">{m.desc}</p></div>)}
       </div>
-      {todays.length > 0 ? <UpdateList entries={todays} /> : <p class="placeholder">暂时还没有更新内容。</p>}
+      <p class="small muted">{tm.teamNote}</p>
     </section>
 
     <section>
-      <div class="section-head"><h2>穴位知识库</h2><a href={u('/xuewei/')}>全部穴位 →</a></div>
-      <p class="small muted">按国家标准整理常用穴位的标准位置和传统经络知识，并配皮门多普勒定位演示，持续扩充到全身穴位。</p>
-      <div class="grid grid-3">{newest.map((p) => <PointCard p={p} />)}</div>
+      <PlatformMatrix compact />
     </section>
 
-    <section>
-      <div class="section-head"><h2>热门穴位</h2></div>
-      <div class="toc">{hot.map((p: any) => <a href={u(`/xuewei/${p.slug}/`)}>{p.displayName} · {p.meridian}</a>)}</div>
-    </section>
-
-    <section>
-      <div class="section-head"><h2>学习资料</h2><a href={u('/ziliao/')}>全部学习资料 →</a></div>
-      {materials.length > 0 ? <UpdateList entries={materials} showDate /> : <p class="placeholder">学习资料整理中。</p>}
-    </section>
-
-    <section>
-      <h2>关于身体里的科学</h2>
-      <div class="card">
-        <p style="margin-top:0"><strong>{site.brand}</strong>（{site.slogan}）以<strong>皮穿支</strong>为主题，围绕丁志伟老师研发的皮门多普勒设备和皮穿支针刺培训，由全国十多位医生、老师一起，每天分享穴位定位、设备实操和皮穿支知识。</p>
-        <a href={u('/about/')}>了解更多 →</a>
-      </div>
-    </section>
+    {todays.length > 0 && (
+      <section>
+        <div class="section-head"><h2>最近更新 <span class="small muted" data-today-label data-latest={latest}>（{latest}）</span></h2><a href={u('/learning/today/')}>查看更多 →</a></div>
+        <UpdateList entries={todays} />
+      </section>
+    )}
 
     <section class="consult-strip">
-      <h2>想了解设备或参加培训？</h2>
-      <p>设备采购、演示和培训安排，请直接咨询。</p>
+      <h2>培训咨询与合作</h2>
+      <p>想参加牛老师小课或丁志伟老师大课、了解皮门多普勒设备，或有内容建议，请联系陈老师。</p>
       <div class="cta-row" style="justify-content:center">
-        <a class="btn" href={u('/contact/device/')}>设备咨询</a>
-        <a class="btn btn-outline" href={u('/contact/training/')}>培训咨询</a>
+        <a class="btn" href={u('/contact/training/')}>培训咨询</a>
+        <a class="btn btn-outline" href={u('/contact/')}>联系我们</a>
       </div>
     </section>
+    <div style="margin-top:16px"><ContactBlock headingLevel={2} /></div>
   </div>
   <script>
-    // 判断最新更新是否为“今天”（按北京时间）
     const el = document.querySelector<HTMLElement>('[data-today-label]');
     if (el) {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
       const latest = el.dataset.latest || '';
-      el.textContent = latest === today ? `（今天 ${latest}）` : `（最近更新：${latest}）`;
+      el.textContent = latest === today ? `（今天 ${latest}）` : `（${latest}）`;
     }
   </script>
-  <LessonProgress />
 </Base>

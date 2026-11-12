@@ -22,7 +22,7 @@ const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&qu
 const meta = (html, re) => { const m = html.match(re); return m ? decode(m[1]) : null; };
 
 console.log('A. 页面是否全部生成');
-const pages = ['admin/stats/index.html', 'index.html', 'xuexi/index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'equipment/history/index.html', 'training/index.html', 'contact/device/index.html', 'contact/training/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
+const pages = ['admin/stats/index.html', 'index.html', 'xuexi/index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'equipment/history/index.html', 'training/index.html', 'contact/index.html', 'platforms/index.html', 'contact/device/index.html', 'contact/training/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
 const slugs = ['zusanli', 'yanglingquan', 'sanyinjiao', 'waiguan', 'houxi', 'shenmen'];
 const wbSlugs = ['zusanli', 'yanglingquan', 'sanyinjiao']; // 已录入负责人原文的穴位
 for (const s of slugs) pages.push(`xuewei/${s}/index.html`);
@@ -48,7 +48,11 @@ for (const s of slugs) {
   ok(/<h2/.test(html) && /<h3/.test(html), `${s} 缺少 H2/H3`);
   ok(decode(html).includes(p.standardLocation.standard), `${s} 标准位置不在 HTML 源代码中`);
   ok(html.includes('content="index, follow"'), `${s} 应允许收录`);
-  ok(html.includes('待审核'), `${s} 未标注待审核`);
+  const vis = decode(html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ''));
+  ok(!/待审核|待填写|审核日志|审核老师|内容审核信息|尚未经专业老师/.test(vis), `${s} 公开页面不应展示内部审核状态（待审核/待填写/审核日志）`);
+  ok(!/仅供学习参考|不构成诊断或治疗/.test(vis), `${s} 穴位页不应机械重复免责声明`);
+  for (const h of ['所属经络', '标准定位', '取穴方法', '传统功能与主治', '皮门多普勒定位演示', '参考资料']) ok(vis.includes(h), `${s} 缺少栏目「${h}」`);
+  ok(!/内容作者|作者待/.test(vis) || (p.author && !/^待/.test(p.author)), `${s} 没有真实作者时不应显示作者栏`);
   ok(html.includes(`datetime="${p.updateDate}"`), `${s} 缺少更新时间`);
   ok(html.includes('GB/T 12346-2021'), `${s} 缺少参考资料`);
   for (const img of html.match(/<img [^>]*>/g) || []) ok(/alt="[^"]+"/.test(img), `${s} 图片缺少 alt: ${img}`);
@@ -93,7 +97,10 @@ for (const s of wbSlugs) {
   }
   ok(html.includes('原文录入'), `${s} 未说明文案为负责人原文`);
   ok(p.longCopy?.showInWorkbench ? html.includes('长文案（可选）') : !html.includes('长文案（可选）'), `${s} 长文案显示错误`);
-  ok(sets[0].variants.length === 6 && sets[0].variants.map((v) => v.no).join('') === '123456', `${s} 应为编号 1—6 的 6 组`);
+  // 组数不固定（见 test-workbench-dynamic.mjs）；这里只核对负责人原文本身：三穴位各 6 组、编号 1—6
+  ok(sets[0].variants.length === 6 && sets[0].variants.map((v) => v.no).join('') === '123456', `${s} 负责人原文应为编号 1—6 的 6 组`);
+  ok(html.includes('视频描述') && html.includes('复制标题') && html.includes('复制描述') && html.includes('复制关键词'), `${s} 应能分别复制标题、视频描述、关键词`);
+  ok(!/登录保护|已加密|需要登录/.test(html.replace(/没有登录保护/g, '')), `${s} 工作台不应宣称有登录保护`);
 }
 
 console.log('B/C/D. 浏览器测试');
@@ -163,7 +170,7 @@ if (chromium && chromePath) {
   for (const vp of [{ width: 360, height: 740 }, { width: 390, height: 844 }, { width: 768, height: 1024 }]) {
     const mctx = await browser.newContext({ viewport: vp, isMobile: vp.width < 600, hasTouch: true, userAgent: 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36 MicroMessenger/8.0.40' });
     const mp = await mctx.newPage();
-    for (const p of ['/', '/xuewei/', '/xuewei/zusanli/', '/xuewei/sanyinjiao/', '/teacher/', '/teacher/zusanli/', '/learning/today/', '/learning/archive/', '/equipment/', '/equipment/history/', '/training/', '/contact/device/', '/contact/training/', '/feedback/', '/about/', '/ziliao/']) {
+    for (const p of ['/', '/xuewei/', '/xuewei/zusanli/', '/xuewei/sanyinjiao/', '/teacher/', '/teacher/zusanli/', '/learning/today/', '/learning/archive/', '/equipment/', '/equipment/history/', '/training/', '/contact/', '/platforms/', '/contact/device/', '/contact/training/', '/feedback/', '/about/', '/ziliao/']) {
       await mp.goto(BASE + p);
       const over = await mp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       ok(over <= 1, `${vp.width}px 宽度下 ${p} 出现横向滚动（${over}px）`);

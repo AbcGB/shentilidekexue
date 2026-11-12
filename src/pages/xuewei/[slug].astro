@@ -1,6 +1,5 @@
 ---
 import Base from '../../layouts/Base.astro';
-import ReviewBadge from '../../components/ReviewBadge.astro';
 import { hasWorkbenchCopies } from '../../lib/copy-core.mjs';
 import { getAcupoints, getArticle, getLearning, site, siteUrl } from '../../lib/data';
 import { u } from '../../lib/url';
@@ -15,114 +14,110 @@ const Content = article?.Content;
 const related = (p.relatedSlugs || []).map((s: string) => all.find((x: any) => x.slug === s)).filter(Boolean);
 const entries = getLearning().filter((e) => (e.acupoints || []).includes(p.slug));
 const path = `/xuewei/${p.slug}/`;
+// 只有真实填写的作者/参与老师才对外展示；内部审核状态（reviewStatus、reviewer）不在公开页面显示，见 /teacher/shenhe/
+const realName = (s: any) => typeof s === 'string' && s.trim() && !/^待/.test(s.trim());
+const authors: { name: string; bio?: string }[] = [
+  ...(Array.isArray(p.contributors) ? p.contributors : []),
+  ...(realName(p.author) ? [{ name: p.author, bio: p.authorBio }] : []),
+].filter((a: any) => realName(a?.name));
+const demoPhotos = p.dopplerDemo?.photos || [];
+const demoVideos = p.dopplerDemo?.videos || [];
+const hasDemo = demoPhotos.length > 0 || demoVideos.length > 0;
+const hasMedia = (p.videos || []).length > 0 || (p.images || []).length > 0;
 const jsonLd = {
   '@context': 'https://schema.org', '@type': 'Article',
   headline: p.seo.title, description: p.seo.description, inLanguage: 'zh-CN',
   datePublished: p.publishDate, dateModified: p.updateDate,
   mainEntityOfPage: siteUrl() + path,
   publisher: { '@type': 'Organization', name: site.siteName },
+  ...(authors.length ? { author: authors.map((a) => ({ '@type': 'Person', name: a.name })) } : {}),
 };
-const reviewed = p.reviewStatus === '已审核';
 ---
 <Base title={p.seo.title} description={p.seo.description} path={path} ogType="article" updated={p.updateDate} keywords={p.seo.keywords} jsonLd={jsonLd}>
   <div class="container">
-    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/xuewei/')}>穴位知识库</a> › {p.displayName}</div>
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/xuewei/')}>穴位知识中心</a> › {p.displayName}</div>
     <header class="detail-head">
       <h1>{p.displayName}</h1>
       <div class="detail-meta">
         <span class="badge">{p.meridian}</span>
         <span class="badge badge-gray">{p.code}</span>
         {p.specialPointCategories.map((c: string) => <span class="badge badge-gray">{c}</span>)}
-        <ReviewBadge status={p.reviewStatus} />
       </div>
       <p class="muted small">拼音：{p.pinyin} · 别名/代码：{p.aliases.join('、')} · 更新时间：<time datetime={p.updateDate}>{p.updateDate}</time></p>
-      {!reviewed && <p class="notice">本页内容整理自国家标准与针灸教材，<strong>尚未经专业老师审核确认（待审核）</strong>。仅供学习参考，不构成诊断或治疗建议。</p>}
+      <p class="lead">{p.summary}</p>
       <nav class="toc" aria-label="本页目录">
-        <a href="#location">标准位置</a><a href="#applications">传统应用</a><a href="#doppler">多普勒定位演示</a><a href="#knowledge">相关知识</a><a href="#media">视频和图片</a><a href="#review">审核信息</a>
+        <a href="#meridian">所属经络</a><a href="#location">标准定位</a><a href="#finding">取穴方法</a><a href="#applications">传统功能与主治</a><a href="#doppler">定位演示</a><a href="#knowledge">相关知识</a><a href="#sources">参考资料</a>
         {hasWorkbenchCopies(p) && <a href={u(`/teacher/${p.slug}/`)} style="background:var(--blue-soft)">老师工作台：复制发布文案</a>}
       </nav>
     </header>
 
     <section class="detail-section" id="meridian">
-      <h2><span class="sec-letter">B</span>所属经络</h2>
-      <p><strong>{p.meridian}</strong>。在针灸教材中归为：{p.specialPointCategories.join('、')}。</p>
+      <h2>所属经络</h2>
+      <p><strong>{p.meridian}</strong>（{p.code}）。在针灸教材中归为：{p.specialPointCategories.join('、')}。</p>
+      {p.nameOrigin && <p>{p.nameOrigin}</p>}
     </section>
 
     <section class="detail-section" id="location">
-      <h2><span class="sec-letter">C</span>{p.name}在哪里？标准位置</h2>
+      <h2>{p.name}在哪里？标准定位</h2>
       <div class="std-box"><strong>标准定位：</strong>{p.standardLocation.standard}<br /><span class="small">（依据：{p.standardLocation.standardSource}）</span></div>
       <h3>通俗说法</h3>
       <p>{p.standardLocation.plain}</p>
-      <h3>简便找法</h3>
+      <h3 id="finding">取穴方法</h3>
       <ol>{p.standardLocation.findingTips.map((t: string) => <li>{t}</li>)}</ol>
-      <div class="placeholder small">穴位示意图：待提供经专业老师审核的真实穴位照片或人体示意图。为保证准确，本站不使用来源不明或未经审核的图片。</div>
     </section>
 
     <section class="detail-section" id="applications">
-      <h2><span class="sec-letter">D</span>传统经络理论中的相关应用</h2>
+      <h2>传统功能与主治</h2>
       <p>{p.traditionalApplications.intro}</p>
       <ul>{p.traditionalApplications.items.map((t: string) => <li>{t}</li>)}</ul>
-      <p class="notice">{p.traditionalApplications.note}</p>
-      {p.cautions?.length > 0 && <><h3>注意事项</h3><ul>{p.cautions.map((t: string) => <li>{t}</li>)}</ul></>}
+      {p.traditionalApplications.note && <p class="small muted">{p.traditionalApplications.note}</p>}
+      {p.cautions?.length > 0 && <><h3>操作要点</h3><ul>{p.cautions.map((t: string) => <li>{t}</li>)}</ul></>}
     </section>
 
     <section class="detail-section" id="doppler">
-      <h2><span class="sec-letter">E</span>皮门多普勒定位演示</h2>
-      {p.dopplerDemo.photos?.length > 0 || p.dopplerDemo.videos?.length > 0 ? (
+      <h2>皮门多普勒定位演示</h2>
+      <p>定位过程：先按标准定位找到{p.name}的大致区域，再把皮门多普勒探头轻放在体表缓慢移动，观察显示屏信号和提示音的变化，在变化明显的位置做定位标记。<a href={u('/equipment/')}>了解皮门多普勒设备 →</a></p>
+      {hasDemo ? (
         <div class="grid grid-2">
-          {p.dopplerDemo.photos.map((ph: any) => <figure style="margin:0"><img src={u(ph.src)} alt={ph.alt} loading="lazy" /><figcaption class="small muted">{ph.caption || ph.alt}</figcaption></figure>)}
-          {p.dopplerDemo.videos.map((v: any) => <a class="card" href={v.url} target="_blank" rel="noopener">▶ {v.title}</a>)}
+          {demoPhotos.map((ph: any) => <figure style="margin:0"><img src={u(ph.src)} alt={ph.alt} loading="lazy" /><figcaption class="small muted">{ph.caption || ph.alt}</figcaption></figure>)}
+          {demoVideos.map((v: any) => <a class="card" href={v.url} target="_blank" rel="noopener">▶ {v.title}</a>)}
         </div>
       ) : (
-        <div class="placeholder">
-          <p style="margin-top:0"><strong>演示素材待提供（{p.dopplerDemo.status}）</strong></p>
-          <p>{p.dopplerDemo.note}</p>
-          <p class="small">计划展示：设备整体照片、探头操作、提示音、定位演示过程与定位标记。</p>
-        </div>
+        <div class="placeholder small"><strong>定位演示视频：素材待提供。</strong>{p.dopplerDemo?.note}</div>
       )}
-      <p class="small muted">演示仅记录实际操作过程：用探头在体表探测，观察设备信号变化和提示音。演示不代表定位绝对准确，也不说明任何治疗效果。<a href={u('/equipment/')}>了解设备与操作流程 →</a></p>
-    </section>
-
-    <section class="detail-section prose" id="knowledge">
-      <h2><span class="sec-letter">F</span>相关知识</h2>
-      {Content ? <Content /> : <p class="muted">相关知识整理中。</p>}
-      {related.length > 0 && <>
-        <h3>本站相关穴位</h3>
-        <ul>{related.map((r: any) => <li><a href={u(`/xuewei/${r.slug}/`)}>{r.displayName}</a>（{r.meridian}）</li>)}</ul>
-      </>}
-      <h3>参考资料</h3>
-      <ul>{p.sources.map((s: any) => <li>{s.title}{s.note && <span class="small muted">（{s.note}）</span>}</li>)}</ul>
-    </section>
-
-    <section class="detail-section" id="media">
-      <h2><span class="sec-letter">G</span>视频和图片</h2>
-      {p.videos.length === 0 && p.images.length === 0 ? (
-        <div class="placeholder">真实拍摄的视频和图片待补充。本站只使用真实拍摄、已获授权的素材。</div>
-      ) : (
-        <div class="grid grid-2">
+      {hasMedia && (
+        <div class="grid grid-2" style="margin-top:12px">
           {p.images.map((im: any) => <figure style="margin:0"><img src={u(im.src)} alt={im.alt} loading="lazy" /><figcaption class="small muted">{im.caption || im.alt}</figcaption></figure>)}
           {p.videos.map((v: any) => <a class="card" href={v.url} target="_blank" rel="noopener">▶ {v.title}</a>)}
         </div>
       )}
-      <details style="margin-top:10px"><summary>视频口播/字幕参考稿（待审核）</summary><p style="white-space:pre-wrap">{p.videoText}</p></details>
+      {p.videoText && <details style="margin-top:10px"><summary>视频口播 / 字幕参考稿</summary><p style="white-space:pre-wrap">{p.videoText}</p></details>}
+    </section>
+
+    <section class="detail-section prose" id="knowledge">
+      <h2>相关知识</h2>
+      {Content ? <Content /> : <p class="muted">相关知识持续补充中。</p>}
+      {related.length > 0 && <>
+        <h3>本站相关穴位</h3>
+        <ul>{related.map((r: any) => <li><a href={u(`/xuewei/${r.slug}/`)}>{r.displayName}</a>（{r.meridian}）</li>)}</ul>
+      </>}
       {entries.length > 0 && <>
-        <h3>相关学习记录</h3>
+        <h3>相关更新</h3>
         <ul>{entries.map((e) => <li>{e.date} · {e.type} · <a href={u(`/learning/archive/#${e.id}`)}>{e.title}</a></li>)}</ul>
       </>}
     </section>
 
-    <section class="detail-section" id="review">
-      <h2><span class="sec-letter">H</span>内容审核信息</h2>
-      <dl class="info">
-        <dt>内容作者</dt><dd>{p.author}</dd>
-        <dt>审核老师</dt><dd>{p.reviewer || '待审核'}</dd>
-        <dt>审核日期</dt><dd>{p.reviewDate || '待审核'}</dd>
-        <dt>审核状态</dt><dd><ReviewBadge status={p.reviewStatus} /></dd>
-        <dt>发布日期</dt><dd>{p.publishDate}</dd>
-        <dt>更新时间</dt><dd><time datetime={p.updateDate}>{p.updateDate}</time></dd>
-        <dt>参考资料</dt><dd>{p.sources.length} 项（见“相关知识”）</dd>
-      </dl>
-      <p class="small muted">发现内容有误？请到 <a href={u('/feedback/')}>意见反馈</a> 告诉我们。</p>
+    {authors.length > 0 && (
+      <section class="detail-section" id="authors">
+        <h2>参与老师</h2>
+        <ul>{authors.map((a) => <li><strong>{a.name}</strong>{a.bio && <>：{a.bio}</>}</li>)}</ul>
+      </section>
+    )}
+
+    <section class="detail-section" id="sources">
+      <h2>参考资料</h2>
+      <ul>{p.sources.map((s: any) => <li>{s.title}{s.note && <span class="small muted">（{s.note}）</span>}</li>)}</ul>
+      <p class="small muted">发现内容有误或有补充建议，欢迎<a href={u('/contact/')}>联系陈老师</a>。</p>
     </section>
 
     <nav class="toc" aria-label="其他穴位">
