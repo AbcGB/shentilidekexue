@@ -1,0 +1,87 @@
+---
+// 咨询留资管理页。页面本身不含任何提交数据或口令；输入口令后由浏览器向接口请求。
+import Base from '../../layouts/Base.astro';
+import { site } from '../../lib/data';
+import { u } from '../../lib/url';
+const apiBase = (site.stats?.apiBase || '/api').replace(/\/$/, '');
+---
+<Base title="咨询留言（管理员）" path="/admin/consults/" noindex description="管理员查看咨询留言。">
+  <div class="container">
+    <div class="breadcrumb"><a href={u('/')}>首页</a> › 管理员 › 咨询留言</div>
+    <h1>咨询留言（管理员）</h1>
+    <p class="small muted">这里是培训和设备咨询的留资，只供陈老师回访，不会被搜索引擎收录。请妥善保管，不要转发患者或学员的联系方式。</p>
+
+    <form id="login" class="card" style="max-width:480px">
+      <label for="token"><strong>管理口令</strong></label>
+      <input id="token" type="password" autocomplete="current-password" required style="width:100%;height:44px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:1rem;margin:6px 0 10px" />
+      <label class="small"><input type="checkbox" id="remember" /> 在本次浏览器会话中记住（关闭浏览器后失效）</label>
+      <div style="margin-top:10px"><button class="btn" type="submit">查看留言</button></div>
+      <p id="login-msg" class="small" style="color:var(--warn)"></p>
+    </form>
+
+    <div id="dash" hidden>
+      <div class="wb-top">
+        <div class="small muted" id="dash-meta"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="small">类型
+            <select id="kind">
+              <option value="">全部</option>
+              <option value="training">培训咨询</option>
+              <option value="device">设备咨询</option>
+            </select>
+          </label>
+          <button class="btn btn-outline btn-sm" id="reload" type="button">刷新</button>
+          <button class="btn btn-outline btn-sm" id="logout" type="button">退出</button>
+        </div>
+      </div>
+      <div id="out"></div>
+    </div>
+  </div>
+  <script type="application/json" id="admin-config" set:html={JSON.stringify({ apiBase })} />
+  <script>
+    const cfg = JSON.parse(document.getElementById('admin-config')!.textContent!);
+    const api = (p: string) => cfg.apiBase + p;
+    const $ = (s: string) => document.querySelector(s) as HTMLElement;
+    const esc = (s: any) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+    const INTENT: Record<string, string> = {
+      small: '牛老师小课', large: '丁志伟老师大课', both: '小课和大课',
+      demo: '设备演示', purchase: '采购', coop: '合作', other: '其他',
+    };
+    const KIND: Record<string, string> = { training: '培训', device: '设备' };
+    let token = sessionStorage.getItem('stl_admin') || '';
+
+    async function load() {
+      const kind = (document.getElementById('kind') as HTMLSelectElement)?.value || '';
+      const q = kind ? `?kind=${encodeURIComponent(kind)}` : '';
+      const res = await fetch(api('/admin/consults') + q, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }).catch(() => null);
+      if (!res) { $('#login-msg').textContent = '无法连接服务。'; return false; }
+      if (res.status === 401) { $('#login-msg').textContent = '口令不正确。'; return false; }
+      if (res.status === 503) { $('#login-msg').textContent = '服务器尚未设置管理口令。'; return false; }
+      if (res.status === 429) { $('#login-msg').textContent = '尝试次数过多，请稍后再试。'; return false; }
+      if (!res.ok) { $('#login-msg').textContent = '服务出错，请稍后再试。'; return false; }
+      const data = await res.json();
+      $('#login').hidden = true; $('#dash').hidden = false;
+      const items = data.items || [];
+      $('#dash-meta').textContent = `共 ${items.length} 条（最多显示 200 条）`;
+      if (!items.length) { $('#out').innerHTML = '<p class="muted">暂时还没有咨询留言。</p>'; return true; }
+      $('#out').innerHTML = `<table class="consult-table"><thead><tr><th>时间</th><th>类型</th><th>称呼</th><th>联系方式</th><th>省市</th><th>背景</th><th>意向</th><th>内容</th></tr></thead><tbody>${
+        items.map((r: any) => `<tr><td>${esc(r.created_at?.replace('T',' ').replace('Z',' UTC') || '')}</td><td>${esc(KIND[r.kind] || r.kind)}</td><td>${esc(r.name)}</td><td>${esc(r.contact)}</td><td>${esc(r.region)}</td><td>${esc(r.background)}</td><td>${esc(INTENT[r.intent] || r.intent)}</td><td>${esc(r.message)}</td></tr>`).join('')
+      }</tbody></table>`;
+      return true;
+    }
+    $('#login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      token = (document.getElementById('token') as HTMLInputElement).value.trim();
+      if ((document.getElementById('remember') as HTMLInputElement).checked) sessionStorage.setItem('stl_admin', token);
+      else sessionStorage.removeItem('stl_admin');
+      await load();
+    });
+    $('#reload').addEventListener('click', () => load());
+    $('#kind').addEventListener('change', () => load());
+    $('#logout').addEventListener('click', () => {
+      token = ''; sessionStorage.removeItem('stl_admin');
+      $('#dash').hidden = true; $('#login').hidden = false; $('#login-msg').textContent = '';
+    });
+    if (token) load();
+  </script>
+</Base>

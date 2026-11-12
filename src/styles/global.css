@@ -303,3 +303,21 @@ dl.info dd { margin: 0; }
 .selectable { user-select: text; -webkit-user-select: text; }
 .footer-platforms { margin-top: 6px; }
 .footer-platforms span { color: #c9d6e8; }
+
+.consult-form { display: grid; gap: 12px; }
+.consult-form label { display: grid; gap: 4px; font-size: .95rem; }
+.consult-form input[type="text"],
+.consult-form input[type="tel"],
+.consult-form select,
+.consult-form textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  font-size: 1rem; font-family: inherit; background: #fff;
+}
+.consult-form textarea { min-height: 110px; resize: vertical; }
+.consult-form .hint { color: var(--muted); font-size: .85rem; font-weight: 400; }
+.consult-notice { background: #f7f9fc; border-radius: 8px; padding: 10px 12px; font-size: .9rem; color: var(--navy-2); }
+.consult-success { background: #eef8f0; border: 1px solid #b7ddc0; border-radius: 8px; padding: 14px; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.consult-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.consult-table th, .consult-table td { border-bottom: 1px solid var(--border); text-align: left; padding: 8px 6px; vertical-align: top; }
+.consult-table th { background: #f0f4fa; }

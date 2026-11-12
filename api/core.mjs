@@ -159,6 +159,61 @@ function corsHeaders(request, env) {
   return {};
 }
 
+
+const CONSULT_INTENTS = {
+  training: { small: '牛老师小课', large: '丁志伟老师大课', both: '小课和大课都想了解' },
+  device: { demo: '设备演示', purchase: '采购', coop: '合作', other: '其他' },
+};
+
+function clip(s, max) {
+  return String(s || '').replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+function newId() {
+  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+async function submitConsult(db, env, ip, body) {
+  const kind = body?.kind === 'device' ? 'device' : body?.kind === 'training' ? 'training' : '';
+  if (!kind) return json({ ok: false, error: 'bad_request' }, 400);
+  // 蜜罐：填了则假装成功，不入库
+  if (clip(body?.company, 200) || clip(body?.website, 200)) return json({ ok: true });
+  const name = clip(body?.name, 40);
+  const contact = clip(body?.contact, 80);
+  const region = clip(body?.region, 80);
+  const background = clip(body?.background, 200);
+  const intent = clip(body?.intent, 20);
+  const message = String(body?.message || '').trim().slice(0, 1000);
+  if (name.length < 1 || contact.length < 5 || region.length < 1) return json({ ok: false, error: 'bad_request' }, 400);
+  if (!CONSULT_INTENTS[kind][intent]) return json({ ok: false, error: 'bad_request' }, 400);
+  const id = newId();
+  const created = new Date().toISOString();
+  const ipHash = await sha256(`${env.STATS_SALT || 'stl-default-salt'}|consult|${ip || 'unknown'}`);
+  await db.run(
+    `INSERT INTO consult_leads (id, kind, name, contact, region, background, intent, message, created_at, ip_hash)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, kind, name, contact, region, background || '', intent, message, created, ipHash]
+  );
+  return json({ ok: true });
+}
+
+async function listConsults(db, url) {
+  const kind = url.searchParams.get('kind') || '';
+  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit') || 100)));
+  let rows;
+  if (kind === 'training' || kind === 'device') {
+    rows = await db.all('SELECT id, kind, name, contact, region, background, intent, message, created_at FROM consult_leads WHERE kind = ? ORDER BY created_at DESC LIMIT ?', [kind, limit]);
+  } else {
+    rows = await db.all('SELECT id, kind, name, contact, region, background, intent, message, created_at FROM consult_leads ORDER BY created_at DESC LIMIT ?', [limit]);
+  }
+  // 不返回 ip_hash
+  return json({ ok: true, items: rows || [] });
+}
+
 /**
  * 处理 /api/* 请求。ctx: { db, env, ip, manifest? }
  * env: STATS_ADMIN_TOKEN（管理口令，必须在服务器端配置）、STATS_SALT、RATE_LIMIT_PER_MIN、ALLOWED_ORIGINS
@@ -188,12 +243,21 @@ export async function handleApi(request, ctx) {
       return withCors(await recordCopy(db, env, body));
     }
 
+    if (url.pathname === '/api/consult' && request.method === 'POST') {
+      const consultLimit = Math.min(limit, 8);
+      if (!(await rateLimit(db, env, ip, 'consult', consultLimit))) return withCors(json({ ok: false, error: 'rate_limited' }, 429));
+      let body;
+      try { body = await request.json(); } catch { return withCors(json({ ok: false, error: 'bad_request' }, 400)); }
+      return withCors(await submitConsult(db, env, ip, body));
+    }
+
     if (url.pathname.startsWith('/api/admin/')) {
       if (!(await rateLimit(db, env, ip, 'admin', 20))) return withCors(json({ ok: false, error: 'rate_limited' }, 429));
       if (!env.STATS_ADMIN_TOKEN) return withCors(json({ ok: false, error: 'admin_not_configured' }, 503));
       const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
       if (!safeEqual(token, env.STATS_ADMIN_TOKEN)) return withCors(json({ ok: false, error: 'unauthorized' }, 401));
       if (url.pathname === '/api/admin/stats' && request.method === 'GET') return withCors(await adminStats(db));
+      if (url.pathname === '/api/admin/consults' && request.method === 'GET') return withCors(await listConsults(db, url));
       if (url.pathname === '/api/admin/sync' && request.method === 'POST' && ctx.manifest) {
         const n = await syncManifest(db, ctx.manifest);
         return withCors(json({ ok: true, synced: n }));

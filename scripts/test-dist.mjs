@@ -22,7 +22,7 @@ const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&qu
 const meta = (html, re) => { const m = html.match(re); return m ? decode(m[1]) : null; };
 
 console.log('A. 页面是否全部生成');
-const pages = ['admin/stats/index.html', 'index.html', 'xuexi/index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'equipment/history/index.html', 'training/index.html', 'contact/index.html', 'platforms/index.html', 'contact/device/index.html', 'contact/training/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
+const pages = ['admin/consults/index.html', 'admin/stats/index.html', 'index.html', 'xuexi/index.html', 'xuewei/index.html', 'learning/today/index.html', 'learning/archive/index.html', 'equipment/index.html', 'equipment/history/index.html', 'training/index.html', 'contact/index.html', 'platforms/index.html', 'contact/device/index.html', 'contact/training/index.html', 'teacher/index.html', 'feedback/index.html', 'about/index.html', 'ziliao/index.html', 'search/index.html', '404.html', 'sitemap.xml', 'robots.txt'];
 const slugs = ['zusanli', 'yanglingquan', 'sanyinjiao', 'waiguan', 'houxi', 'shenmen'];
 const wbSlugs = ['zusanli', 'yanglingquan', 'sanyinjiao']; // 已录入负责人原文的穴位
 for (const s of slugs) pages.push(`xuewei/${s}/index.html`);

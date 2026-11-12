@@ -39,9 +39,8 @@ jobs:
           retention-days: 30
 
   test:
-    # 单独的测试任务：不影响下面的部署任务（部署只依赖 build）。
-    # 测试在 GitHub 的临时机器上用本地临时数据库跑，不会部署任何统计接口。
-    name: 运行测试（npm test）
+    # 测试必须通过，下面的部署任务才会运行。测试在 GitHub 临时机器上用本地临时数据库跑，不会部署到正式站。
+    name: 运行测试（npm test 与 npm run test:stats）
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,14 +55,18 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
           BASE_PATH: ${{ vars.BASE_PATH }}
-      - name: 测试
+      - name: 测试网站
         run: npm test
+        env:
+          BASE_PATH: ${{ vars.BASE_PATH }}
+      - name: 测试复制统计与咨询表单
+        run: npm run test:stats
         env:
           BASE_PATH: ${{ vars.BASE_PATH }}
 
   deploy-server:
     name: 部署到自己的服务器
-    needs: build
+    needs: [build, test]
     if: github.event_name != 'pull_request' && vars.DEPLOY_TARGET == 'server'
     runs-on: ubuntu-latest
     steps:
@@ -87,7 +90,7 @@ jobs:
 
   deploy-cloudflare:
     name: 部署到 Cloudflare Pages
-    needs: build
+    needs: [build, test]
     if: github.event_name != 'pull_request' && vars.DEPLOY_TARGET == 'cloudflare'
     runs-on: ubuntu-latest
     steps:
@@ -105,7 +108,7 @@ jobs:
 
   deploy-github-pages-test:
     name: 部署到 GitHub Pages（仅测试预览）
-    needs: build
+    needs: [build, test]
     if: github.event_name != 'pull_request' && vars.DEPLOY_TARGET == 'github-pages-test'
     runs-on: ubuntu-latest
     permissions:

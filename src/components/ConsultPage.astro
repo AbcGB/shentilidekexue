@@ -1,5 +1,5 @@
 ---
-// 静态咨询页（培训咨询 / 设备咨询）。没有在线表单、不收集任何信息：引导联系陈老师，咨询模板只是方便复制后发给陈老师。
+// 培训咨询 / 设备咨询：在线表单写入测试/正式库供陈老师回访；同时保留联系陈老师与咨询模板。
 import Base from '../layouts/Base.astro';
 import CopyRuntime from './CopyRuntime.astro';
 import ContactBlock from './ContactBlock.astro';
@@ -16,30 +16,111 @@ const template = isDevice
   : `【皮穿支针刺培训咨询】\n称呼：\n所在省市：\n专业身份或学习背景：\n想了解：牛老师小课 / 丁志伟老师大课 / 都想了解\n想了解的培训内容：\n从哪里了解到我们（网站、哪位老师的账号、工作群等）：`;
 const other = isDevice ? { href: '/contact/training/', label: '培训咨询' } : { href: '/contact/device/', label: '设备咨询' };
 const back = isDevice ? { href: '/equipment/', label: '看皮门多普勒设备介绍' } : { href: '/training/', label: '看小课与大课介绍' };
+const apiBase = (site.stats?.apiBase || '/api').replace(/\/$/, '');
 ---
-<Base title={`${title}：${topic}`} path={path} description={isDevice ? `皮门多普勒设备咨询：设备演示、采购与合作，请联系「${site.brand}」项目负责人陈老师。` : `皮穿支针刺培训咨询：牛老师小课、丁志伟老师大课的开课时间和地点，请联系「${site.brand}」项目负责人陈老师。`} keywords={[title, topic, '皮门多普勒', '皮穿支针刺培训', site.brand]}>
+<Base title={`${title}：${topic}`} path={path} description={isDevice ? `皮门多普勒设备咨询：设备演示、采购与合作，可在本页填写咨询，或联系「${site.brand}」项目负责人陈老师。` : `皮穿支针刺培训咨询：牛老师小课、丁志伟老师大课，可在本页填写咨询，或联系「${site.brand}」项目负责人陈老师。`} keywords={[title, topic, '皮门多普勒', '皮穿支针刺培训', site.brand]}>
   <div class="container">
     <div class="breadcrumb"><a href={u('/')}>首页</a> › <a href={u('/contact/')}>联系我们</a> › {title}</div>
     <h1>{title}</h1>
-    <p>{isDevice ? '想了解皮门多普勒设备的演示、采购或后续合作，请联系项目负责人陈老师。' : '想参加皮穿支针刺培训——牛老师小课（基础教学）或丁志伟老师大课（核心技术讲解），请联系项目负责人陈老师。团队会根据各地区的意向学员情况协调开课，时间、地点和费用具体安排请咨询。'}</p>
+    <p>{isDevice ? '想了解皮门多普勒设备的演示、采购或后续合作，可以在本页留下联系方式，或直接联系项目负责人陈老师。' : '想参加皮穿支针刺培训——牛老师小课（基础教学）或丁志伟老师大课（核心技术讲解），可以在本页留下联系方式，或直接联系项目负责人陈老师。团队会根据各地区的意向学员情况协调开课，时间、地点和费用具体安排请咨询。'}</p>
+
+    <div class="card" style="margin:16px 0">
+      <h2 style="margin-top:0">在线咨询</h2>
+      <p class="consult-notice">本表只用于{isDevice ? '设备' : '培训'}咨询回访，由陈老师查看，不会在网站上公开。请填写你自己的称呼和联系方式；请不要填写患者姓名、病历、检查单或其他病情资料。{isDevice ? '设备价格、供货和演示安排' : '开课时间、地点和费用'}以陈老师的正式答复为准。</p>
+      <div id="consult-ok" class="consult-success" hidden>
+        <strong>已收到你的咨询。</strong>
+        <p style="margin:8px 0 0">陈老师会尽快与你联系。具体安排以回复为准。</p>
+      </div>
+      <form id="consult-form" class="consult-form" style="margin-top:12px">
+        <input type="hidden" name="kind" value={kind} />
+        <label class="hp">请勿填写<input type="text" name="company" tabindex="-1" autocomplete="off" /></label>
+        <label>称呼
+          <input type="text" name="name" required maxlength="40" autocomplete="name" />
+        </label>
+        <label>联系方式<span class="hint">微信或电话</span>
+          <input type="text" name="contact" required minlength="5" maxlength="80" autocomplete="tel" />
+        </label>
+        <label>所在省市
+          <input type="text" name="region" required maxlength="80" placeholder="例如：海南省三亚市" autocomplete="address-level1" />
+        </label>
+        <label>{isDevice ? '单位或身份' : '专业身份或学习背景'}<span class="hint">选填，例如医生、针灸老师、在读学员</span>
+          <input type="text" name="background" maxlength="200" />
+        </label>
+        {isDevice ? (
+          <label>想了解
+            <select name="intent" required>
+              <option value="">请选择</option>
+              <option value="demo">设备演示</option>
+              <option value="purchase">采购</option>
+              <option value="coop">合作</option>
+              <option value="other">其他</option>
+            </select>
+          </label>
+        ) : (
+          <label>想了解的培训
+            <select name="intent" required>
+              <option value="">请选择</option>
+              <option value="small">牛老师小课</option>
+              <option value="large">丁志伟老师大课</option>
+              <option value="both">小课和大课都想了解</option>
+            </select>
+          </label>
+        )}
+        <label>想了解的内容<span class="hint">选填，请不要填写患者隐私</span>
+          <textarea name="message" maxlength="1000"></textarea>
+        </label>
+        <div><button class="btn" type="submit" data-submit>提交咨询</button></div>
+        <p id="consult-msg" class="small" style="color:var(--warn);margin:0"></p>
+      </form>
+    </div>
 
     <ContactBlock />
 
     <div class="card" style="margin-top:16px">
-      <div class="section-head"><h2 style="margin-top:0">咨询时可以说明</h2><button class="btn" type="button" data-copy-key="consult">复制咨询模板</button></div>
-      <p class="small muted" style="margin-top:0">复制后填好，发给陈老师或发到工作群 @陈老师，回复更快。</p>
+      <div class="section-head"><h2 style="margin-top:0">也可以复制后发给陈老师</h2><button class="btn" type="button" data-copy-key="consult">复制咨询模板</button></div>
+      <p class="small muted" style="margin-top:0">如果你更习惯在微信里说明，可以复制模板填好，发给陈老师或发到工作群 @陈老师。</p>
       <div class="wb-text" style="background:#f7f9fc;padding:12px;border-radius:8px">{template}</div>
     </div>
 
-    <ul class="small muted" style="margin-top:14px">
-      <li>{isDevice ? '设备价格、供货和演示安排' : '开课时间、地点、人数和费用'}以陈老师的正式答复为准。</li>
-      <li>请不要发送患者姓名、病历、检查单等隐私信息。</li>
-    </ul>
     <div class="cta-row" style="margin-top:16px">
       <a class="btn btn-outline" href={u(back.href)}>{back.label}</a>
       <a class="btn btn-outline" href={u(other.href)}>{other.label}</a>
     </div>
     <script type="application/json" id="copy-data" set:html={JSON.stringify({ consult: template })} />
+    <script type="application/json" id="consult-config" set:html={JSON.stringify({ apiBase })} />
   </div>
   <CopyRuntime />
+  <script>
+    const cfg = JSON.parse(document.getElementById('consult-config')!.textContent!);
+    const form = document.getElementById('consult-form') as HTMLFormElement;
+    const msg = document.getElementById('consult-msg') as HTMLElement;
+    const okBox = document.getElementById('consult-ok') as HTMLElement;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      const fd = new FormData(form);
+      const body: Record<string, string> = {};
+      fd.forEach((v, k) => { body[k] = String(v); });
+      const btn = form.querySelector('[data-submit]') as HTMLButtonElement;
+      btn.disabled = true;
+      try {
+        const res = await fetch(cfg.apiBase + '/consult', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          cache: 'no-store',
+        });
+        const data = await res.json().catch(() => null);
+        if (res.status === 429) { msg.textContent = '提交过于频繁，请稍后再试。'; return; }
+        if (!res.ok || !data?.ok) { msg.textContent = '提交没有成功，请检查必填项，或改用下方方式联系陈老师。'; return; }
+        form.hidden = true;
+        okBox.hidden = false;
+        okBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        msg.textContent = '网络暂时不可用。请稍后再试，或改用下方方式联系陈老师。';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
 </Base>

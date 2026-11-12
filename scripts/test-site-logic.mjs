@@ -146,7 +146,7 @@ for (const a of plat.accounts) {
   ok(shown === canShowAccount(a), `账号 ${a.id} 的显示状态不对（visible=${a.visible}）`);
 }
 for (const f of publicFiles) for (const m of R(f).matchAll(/<a\b[^>]*href="([^"]*)"/g)) ok(m[1].trim() !== '', `${f} 有空链接`);
-for (const f of ['contact/index.html', 'feedback/index.html', 'contact/training/index.html', 'contact/device/index.html']) {
+for (const f of ['contact/index.html', 'feedback/index.html']) {
   const h = R(f);
   ok(!/<form\b|<input\b|<textarea\b(?![^>]*readonly)/.test(h.replace(/<div class="manual-dialog"[\s\S]*?<\/div>\s*<\/div>/, '')), `${f} 不应有收集信息的表单`);
   ok(text(h).includes('如有内容建议、合作咨询或其他问题，请联系陈老师'), `${f} 应优先展示“联系陈老师”`);
@@ -156,9 +156,16 @@ if (!siteCfg.contact.wechatId) ok(!/微信号[:：]/.test(text(R('contact/index.
 ok(!/登录保护(?!，)/.test(text(R('teacher/index.html')).replace(/没有登录保护/g, '')), '工作台不应宣称具有登录保护');
 for (const f of ['contact/device/index.html', 'contact/training/index.html']) {
   const h = R(f);
-  ok(!/<form\b|<input\b|<textarea\b(?![^>]*readonly)/.test(h.replace(/<div class="manual-dialog"[\s\S]*?<\/div>\s*<\/div>/, '')), `${f} 不应有收集信息的表单`);
-  ok(text(h).includes('@陈老师'), `${f} 应引导到工作群 @陈老师`);
+  const tpage = text(h);
+  ok(h.includes('id="consult-form"') && h.includes('name="name"') && h.includes('name="contact"') && h.includes('name="region"') && h.includes('name="intent"'), `${f} 应有在线咨询表单（称呼、联系方式、省市、意向）`);
+  ok(tpage.includes('请不要填写患者姓名、病历、检查单') && tpage.includes('不会在网站上公开'), `${f} 表单旁应有用途说明，并禁止填写患者资料`);
+  ok(!/患者姓名|病历号|检查单号|诊断/.test(h.match(/id="consult-form"[\s\S]*?<\/form>/)?.[0] || ''), `${f} 表单字段不应收集患者资料`);
+  ok(tpage.includes('以陈老师的正式答复为准'), `${f} 不应把未定的时间或费用写死`);
+  ok(tpage.includes('如有内容建议、合作咨询或其他问题，请联系陈老师') && tpage.includes('@陈老师'), `${f} 仍应保留联系陈老师和工作群 @陈老师`);
 }
+const adminConsult = R('admin/consults/index.html');
+ok(/<meta name="robots" content="noindex/.test(adminConsult) && !/STATS_ADMIN_TOKEN/.test(adminConsult), '咨询管理页应 noindex，且页面本身不含管理口令');
+ok(R('robots.txt').includes('Disallow: /admin/'), 'robots.txt 应继续屏蔽 /admin/');
 for (const f of htmlFiles.filter((f) => !f.startsWith('teacher/') && !f.startsWith('admin/'))) {
   const t = text(R(f));
   ok(!/精准到毫米|毫米级|百分之百精准|治愈/.test(t), `${f} 出现不应使用的说法（精准到毫米/毫米级/百分之百精准/治愈）`);

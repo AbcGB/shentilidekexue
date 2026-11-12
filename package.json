@@ -13,7 +13,7 @@
     "preview:static": "astro preview --host --port 4321",
     "stats:init": "node scripts/stats-init.mjs",
     "test": "node scripts/test-dist.mjs && node scripts/test-drafts.mjs && node scripts/test-site-logic.mjs && node scripts/test-workbench-dynamic.mjs",
-    "test:stats": "node scripts/test-stats.mjs",
+    "test:stats": "node scripts/test-stats.mjs && node scripts/test-consult.mjs",
     "test:drafts": "node scripts/test-drafts.mjs",
     "draft:copy": "node scripts/draft-copy.mjs",
     "status": "node scripts/review-status.mjs",

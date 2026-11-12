@@ -73,3 +73,19 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   count INTEGER NOT NULL DEFAULT 0,
   at_ms INTEGER NOT NULL
 );
+
+-- 培训/设备咨询留资（不含患者信息）。仅管理员可读取，不对外公开查询。
+CREATE TABLE IF NOT EXISTS consult_leads (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,              -- training / device
+  name TEXT NOT NULL,              -- 称呼
+  contact TEXT NOT NULL,           -- 联系方式（微信或电话）
+  region TEXT,                     -- 省市
+  background TEXT,                 -- 专业身份或学习/单位背景，不是病历
+  intent TEXT,                     -- training: small/large/both；device: demo/purchase/coop/other
+  message TEXT,                    -- 想了解的内容
+  created_at TEXT NOT NULL,
+  ip_hash TEXT                     -- 加盐哈希，不保存原始 IP
+);
+CREATE INDEX IF NOT EXISTS idx_consult_leads_created ON consult_leads(created_at);
+CREATE INDEX IF NOT EXISTS idx_consult_leads_kind ON consult_leads(kind);
